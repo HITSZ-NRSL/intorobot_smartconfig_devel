@@ -2,7 +2,8 @@
  * File:   smartconfig-server.c
  * Author: Haoyao Chen
  *
- * Created on 2016年03月04日, 下午10:34
+ * Created on Mar. 4, 10:34pm
+ * Description: UDP server
  */
 
 #include <stdio.h>
