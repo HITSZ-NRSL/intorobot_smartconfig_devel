@@ -13,7 +13,7 @@ echo "example: $0 xiaomi CH"
 echo "------------------------------------------------------------"
 #exit 1
 
-ap_info=`airodump-ng |grep SmartconfigResult`
+ap_info=`smartconfig-dump |grep SmartconfigResult`
 #echo "$ap_info"
 
 ap_info=`echo ${ap_info#*:}`
@@ -36,13 +36,16 @@ bssid=`echo ${ap_info} | awk '{print $6}'`
 bssid=${bssid#*:}
 echo $bssid
 
+
+uci set wireless.@wifi-iface[1].device='radio0'
+uci set wireless.@wifi-iface[1].network='wwan'
+uci set wireless.@wifi-iface[1].mode='sta'
 uci set wireless.@wifi-iface[1].ssid=${ssid}
 uci set wireless.@wifi-iface[1].key=${passwd}
-uci set wireless.@wifi-iface[1].encryption=${enc}
-uci set wireless.@wifi-iface[1].mode='sta'
-uci set wireless.@wifi-iface[1].netwokr='wwan'
-uci set wireless.@wifi-iface[1].device='radio0'
+uci set wireless.@wifi-iface[1].encryption=psk2
 uci commit wireless
+/etc/init.d/network restart
 
+echo `smartconfig-response -s ${ssid} -w ${passwd} -b ${bssid} -p  5557 -i ${source-ip}` 
 exit 1
 
