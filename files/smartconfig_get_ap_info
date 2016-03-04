@@ -13,7 +13,7 @@ echo "example: $0 xiaomi CH"
 echo "------------------------------------------------------------"
 #exit 1
 
-ap_info=`./airodump-ng |grep SmartconfigResult`
+ap_info=`airodump-ng |grep SmartconfigResult`
 #echo "$ap_info"
 
 ap_info=`echo ${ap_info#*:}`
@@ -36,23 +36,13 @@ bssid=`echo ${ap_info} | awk '{print $6}'`
 bssid=${bssid#*:}
 echo $bssid
 
-exit 1
-   if [ "$ssid"x == ,"$1"x ]
-   then
-      result=`echo "$ssid_info" | sed -n "$counter"p | awk '{print $"'$field'"}'`
-      echo -n $result
-      print_inf "[$0 info]:get $1 $2 = $result "
-      exit 0
-   fi
-
-   let counter+=1
-
-done
-
-
-print_err "[$0 err ]:get $1 $2 error " 
-
-
+uci set wireless.@wifi-iface[1].ssid=${ssid}
+uci set wireless.@wifi-iface[1].key=${passwd}
+uci set wireless.@wifi-iface[1].encryption=${enc}
+uci set wireless.@wifi-iface[1].mode='sta'
+uci set wireless.@wifi-iface[1].netwokr='wwan'
+uci set wireless.@wifi-iface[1].device='radio0'
+uci commit wireless
 
 exit 1
 
