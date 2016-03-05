@@ -84,16 +84,10 @@ int main(int argc, char** argv)
     while(1)
     {
         recvfrom(socket_descriptor,message,sizeof(message),0,(struct sockaddr *)&sin,&sin_len);
-        //  printf("%s, %s, %s, %d, %d " , str_ip, ap_ssid, ap_passwd, total_length, ssidpasswd_length);
-    	for(iter = 0; iter<12; iter++)
-    		printf("%02X ", (unsigned char)message[iter]);
+        printf("Received: %s\n" , message);
+    	//for(iter = 0; iter<12; iter++)
+    	//	printf("%02X ", (unsigned char)message[iter]);
     	
-        if(strncmp(message,"stop",4) == 0)//接受到的消息为 “stop”
-        {
-
-            printf("Sender has told me to end the connection\n");
-            break;
-        }
     }
 
     close(socket_descriptor);
