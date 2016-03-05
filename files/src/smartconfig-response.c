@@ -61,6 +61,7 @@ int main(int argc, char** argv) {
     int option;
     int socket_descriptor; //套接口描述字
     int iter=0;
+    int so_broadcast=1;
     char buf[80];
     struct sockaddr_in address;//处理网络通信的地址
     char version[] = "0.1";
@@ -140,12 +141,14 @@ int main(int argc, char** argv) {
 
     bzero(&address,sizeof(address));
     address.sin_family=AF_INET;
-    address.sin_addr.s_addr=inet_addr(str_ip);
+    //address.sin_addr.s_addr=inet_addr(str_ip);
+    address.sin_addr.s_addr=htonl(INADDR_BROADCAST);
     address.sin_port=htons(port);
 
     //创建一个 UDP socket
     socket_descriptor=socket(AF_INET,SOCK_DGRAM,0);//IPV4  SOCK_DGRAM 数据报套接字（UDP协议）
-
+    
+    setsockopt(socket_descriptor,SOL_SOCKET,SO_BROADCAST,&so_broadcast,sizeof(so_broadcast));
     for(iter=0;iter<=11120;iter++)
     {
 		buf[0] = (unsigned char)ssidpasswd_length;
