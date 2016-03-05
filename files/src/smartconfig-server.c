@@ -14,17 +14,63 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <getopt.h>
 
-int port=5556;
+char usage[] =
+"\n"
+"  %s - (C) 2016-2017 MOLMC Ltd. Co.\n"
+"  http://www.intorobot.com\n"
+"\n"
+"  usage: smartconfig-server <options> \n"
+"\n"
+"  Options:\n"
+"      -p --port                : udp socket port of User's App\n"
+"\n"
+"      -h --help                : Displays this usage screen\n"
+"\n";
 
-int main(int argc, char** argv) {
 
+struct option long_options[] = {
+        {"port",     1, 0, 'p'},
+        {"help",     0, 0, 'h'},
+    };
+
+int main(int argc, char** argv)
+{
+	int port=5556;
     int sin_len;
     char message[256];
     int iter;
+    int option;
     int socket_descriptor;
     struct sockaddr_in sin;
-    printf("Waiting for data form sender \n");
+    
+    do {
+        option = getopt_long( argc, argv, "p:", long_options, NULL);
+
+        if( option < 0 ) break;
+
+        switch( option )
+        {
+            case 0 :
+                break;
+
+            case ':':
+                printf("\"%s --help\" for help.\n", argv[0]);
+                return( 1 );
+
+            case '?':
+                printf("\"%s --help\" for help.\n", argv[0]);
+                return( 1 );
+
+            case 'p':
+            	port = atoi(optarg);
+                break;
+        }
+        
+     }while(1); 
+    
+    printf("Waiting for data form sender from port %d\n", port);
 
     bzero(&sin,sizeof(sin));
     sin.sin_family=AF_INET;
