@@ -163,6 +163,7 @@ int main(int argc, char** argv) {
 		buf[11] = (unsigned char)total_length;
 		//sprintf(buf,"%c%s%s%c", (unsigned char)ssidpasswd_length, ap_bssid, ip, (unsigned char)total_length);
         sendto(socket_descriptor,buf,12,0,(struct sockaddr *)&address,sizeof(address));
+        usleep(1000);
     }
     //  printf("%s, %s, %s, %d, %d " , str_ip, ap_ssid, ap_passwd, total_length, ssidpasswd_length);
 	for(iter = 0; iter<12; iter++)

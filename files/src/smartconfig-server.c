@@ -45,6 +45,10 @@ int main(int argc, char** argv)
     int socket_descriptor;
     struct sockaddr_in sin;
     
+    int out_port=5557;
+    int socket_out_fd;
+    struct sockaddr_in sout;
+    
     do {
         option = getopt_long( argc, argv, "p:", long_options, NULL);
 
@@ -83,13 +87,33 @@ int main(int argc, char** argv)
 
     while(1)
     {
+    	strcpy(message, "");
         recvfrom(socket_descriptor,message,sizeof(message),0,(struct sockaddr *)&sin,&sin_len);
         printf("Received: %s\n" , message);
+        //if(strcmp(message, "{\"command\":\"hello\"}") == 0)
+        //	break;
     	//for(iter = 0; iter<12; iter++)
     	//	printf("%02X ", (unsigned char)message[iter]);
     	
     }
 
+    bzero(&sout,sizeof(sout));
+    sout.sin_family=AF_INET;
+    sout.sin_addr.s_addr=inet_addr("192.168.11.111");
+    sout.sin_port=htons(out_port);
+
+    //创建一个 UDP socket
+    socket_out_fd = socket(AF_INET,SOCK_DGRAM,0);//IPV4  SOCK_DGRAM 数据报套接字（UDP协议）
+    
+    //setsockopt(socket_out_fd,SOL_SOCKET,SO_BROADCAST,&so_broadcast,sizeof(so_broadcast));
+    
+    for(iter=0; iter<2000; iter++)
+    {
+    	strcpy(message, "{\"status\":\"200\"}");
+     	sendto(socket_out_fd, message, strlen(message) + 1, 0,(struct sockaddr *)&sout,sizeof(sout));
+    }
+  
+    close(socket_out_fd);    
     close(socket_descriptor);
     exit(0);
 

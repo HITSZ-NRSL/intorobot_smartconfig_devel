@@ -51,8 +51,8 @@ uci commit wireless
 echo "send data to port 18266"
 echo `smartconfig-response -s ${ssid} -w ${passwd} -b ${bssid} -p 18266 -i ${source_ip}` 
 
-echo "send data to port 5557"
-echo `smartconfig-response -s ${ssid} -w ${passwd} -b ${bssid} -p  5557 -i ${source_ip}` 
+#echo "send data to port 5557"
+#echo `smartconfig-response -s ${ssid} -w ${passwd} -b ${bssid} -p  5557 -i ${source_ip}` 
 
 exit 1
 
