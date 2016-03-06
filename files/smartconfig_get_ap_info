@@ -29,9 +29,12 @@ echo $enc
 auth=`echo ${ap_info} | awk '{print $4}'`
 auth=${auth#*:}
 echo $auth
-passwd=`echo ${ap_info} | awk '{print $5}'`
-passwd=${passwd#*:}
-echo $passwd
+password=`echo ${ap_info} | awk '{print $5}'`
+password=${password#*:}
+if [ ! $password ]; then
+	password = none
+fi
+echo $password
 bssid=`echo ${ap_info} | awk '{print $6}'`
 bssid=${bssid#*:}
 echo $bssid
@@ -43,16 +46,16 @@ uci set wireless.@wifi-iface[1].device='radio0'
 uci set wireless.@wifi-iface[1].network='wwan'
 uci set wireless.@wifi-iface[1].mode='sta'
 uci set wireless.@wifi-iface[1].ssid=${ssid}
-uci set wireless.@wifi-iface[1].key=${passwd}
+uci set wireless.@wifi-iface[1].key=${password}
 uci set wireless.@wifi-iface[1].encryption=psk2
 uci commit wireless
 /etc/init.d/network restart
 
 echo "send data to port 18266"
-echo `smartconfig-response -s ${ssid} -w ${passwd} -b ${bssid} -p 18266 -i ${source_ip}` 
+echo `smartconfig-response -s ${ssid} -w ${password} -b ${bssid} -p 18266 -i 192.168.11.255` 
 
 #echo "send data to port 5557"
-#echo `smartconfig-response -s ${ssid} -w ${passwd} -b ${bssid} -p  5557 -i ${source_ip}` 
+#echo `smartconfig-response -s ${ssid} -w ${password} -b ${bssid} -p  5557 -i ${source_ip}` 
 
 exit 1
 

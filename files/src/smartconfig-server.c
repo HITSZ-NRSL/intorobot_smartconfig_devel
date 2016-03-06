@@ -47,6 +47,7 @@ int main(int argc, char** argv)
     
     int out_port=5557;
     int socket_out_fd;
+    int so_broadcast = 1;
     struct sockaddr_in sout;
     
     do {
@@ -87,11 +88,11 @@ int main(int argc, char** argv)
 
     while(1)
     {
-    	strcpy(message, "");
+    	//strcpy(message, "");
         recvfrom(socket_descriptor,message,sizeof(message),0,(struct sockaddr *)&sin,&sin_len);
         printf("Received: %s\n" , message);
-        //if(strcmp(message, "{\"command\":\"hello\"}") == 0)
-        //	break;
+        if(strcmp(message, "{\"command\":\"hello\"}") == 0)
+        	break;
     	//for(iter = 0; iter<12; iter++)
     	//	printf("%02X ", (unsigned char)message[iter]);
     	
@@ -105,12 +106,14 @@ int main(int argc, char** argv)
     //创建一个 UDP socket
     socket_out_fd = socket(AF_INET,SOCK_DGRAM,0);//IPV4  SOCK_DGRAM 数据报套接字（UDP协议）
     
-    //setsockopt(socket_out_fd,SOL_SOCKET,SO_BROADCAST,&so_broadcast,sizeof(so_broadcast));
+    setsockopt(socket_out_fd,SOL_SOCKET,SO_BROADCAST,&so_broadcast,sizeof(so_broadcast));
     
-    for(iter=0; iter<2000; iter++)
+    //for(iter=0; iter<2000; iter++)
+    while(1)
     {
     	strcpy(message, "{\"status\":\"200\"}");
-     	sendto(socket_out_fd, message, strlen(message) + 1, 0,(struct sockaddr *)&sout,sizeof(sout));
+     	sendto(socket_out_fd, message, strlen(message), 0,(struct sockaddr *)&sout,sizeof(sout));
+     	//usleep(100000);
     }
   
     close(socket_out_fd);    

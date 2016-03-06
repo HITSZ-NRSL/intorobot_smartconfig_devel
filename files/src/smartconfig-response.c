@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
 
 	int i;
     char *string = NULL;
-    int port=5557;
+    int port=18266;
     char *ap_ssid = NULL;
     char *ap_passwd = NULL;
     unsigned char ap_bssid[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
@@ -135,9 +135,9 @@ int main(int argc, char** argv) {
      }while(1); 
 
     if(ap_passwd!=NULL)  //no password
-	ssidpasswd_length = strlen(ap_ssid) + strlen(ap_passwd) + 9;
+    	ssidpasswd_length = strlen(ap_ssid) + strlen(ap_passwd) + 9;
     else
-	ssidpasswd_length = strlen(ap_ssid) + 9;
+    	ssidpasswd_length = strlen(ap_ssid) + 9;
 
     bzero(&address,sizeof(address));
     address.sin_family=AF_INET;
@@ -149,7 +149,8 @@ int main(int argc, char** argv) {
     socket_descriptor=socket(AF_INET,SOCK_DGRAM,0);//IPV4  SOCK_DGRAM 数据报套接字（UDP协议）
     
     setsockopt(socket_descriptor,SOL_SOCKET,SO_BROADCAST,&so_broadcast,sizeof(so_broadcast));
-    for(iter=0;iter<=11120;iter++)
+    
+    for(iter=0;iter<=5000;iter++)
     {
 		buf[0] = (unsigned char)ssidpasswd_length;
 
@@ -163,7 +164,7 @@ int main(int argc, char** argv) {
 		buf[11] = (unsigned char)total_length;
 		//sprintf(buf,"%c%s%s%c", (unsigned char)ssidpasswd_length, ap_bssid, ip, (unsigned char)total_length);
         sendto(socket_descriptor,buf,12,0,(struct sockaddr *)&address,sizeof(address));
-        usleep(1000);
+        usleep(10);
     }
     //  printf("%s, %s, %s, %d, %d " , str_ip, ap_ssid, ap_passwd, total_length, ssidpasswd_length);
 	for(iter = 0; iter<12; iter++)
