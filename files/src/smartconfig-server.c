@@ -37,7 +37,7 @@ struct option long_options[] = {
 
 int main(int argc, char** argv)
 {
-	int port=5556;
+	int port=18266;
     int sin_len;
     char message[256];
     int iter;
@@ -75,7 +75,7 @@ int main(int argc, char** argv)
         
      }while(1); 
     
-    printf("Waiting for data form sender from port %d\n", port);
+    printf("Waiting for data from sender at port %d\n", port);
 
     bzero(&sin,sizeof(sin));
     sin.sin_family=AF_INET;
@@ -83,8 +83,17 @@ int main(int argc, char** argv)
     sin.sin_port=htons(port);
     sin_len=sizeof(sin);
 
-    socket_descriptor=socket(AF_INET,SOCK_DGRAM,0);
-    bind(socket_descriptor,(struct sockaddr *)&sin,sizeof(sin));
+    if((socket_descriptor=socket(PF_INET,SOCK_DGRAM,0)) == -1)
+    {
+    	perror("socket fail");
+    	return -1;
+    }
+
+    if(bind(socket_descriptor,(struct sockaddr *)&sin,sizeof(sin)) == -1)
+    {
+    	perror("bind fail");
+    	return -1;
+    }
 
     while(1)
     {
@@ -93,6 +102,8 @@ int main(int argc, char** argv)
         printf("Received: %s\n" , message);
         if(strcmp(message, "{\"command\":\"hello\"}") == 0)
         	break;
+
+        usleep(100);
     	//for(iter = 0; iter<12; iter++)
     	//	printf("%02X ", (unsigned char)message[iter]);
     	
@@ -105,9 +116,9 @@ int main(int argc, char** argv)
 
     //创建一个 UDP socket
     socket_out_fd = socket(AF_INET,SOCK_DGRAM,0);//IPV4  SOCK_DGRAM 数据报套接字（UDP协议）
-    
+
     setsockopt(socket_out_fd,SOL_SOCKET,SO_BROADCAST,&so_broadcast,sizeof(so_broadcast));
-    
+
     //for(iter=0; iter<2000; iter++)
     while(1)
     {
@@ -115,8 +126,8 @@ int main(int argc, char** argv)
      	sendto(socket_out_fd, message, strlen(message), 0,(struct sockaddr *)&sout,sizeof(sout));
      	//usleep(100000);
     }
-  
-    close(socket_out_fd);    
+
+    close(socket_out_fd);
     close(socket_descriptor);
     exit(0);
 
