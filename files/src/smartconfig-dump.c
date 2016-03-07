@@ -1829,6 +1829,7 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
     unsigned char data_byte_index = 0;
     unsigned char bssid[6];
     unsigned char ApBSsid[6];
+    int  ApChannel;
     char ApPasswd[30]; //max 30 password long
     char ApESsid[30];
     char ApEnc[10];
@@ -1863,9 +1864,11 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
     	{
 	    	printf("CH: %d \n", G.channels[chan]);
 	    	G.channel[0] = G.channels[chan];
+	    	ApChannel = G.channels[chan]; //current channel
 
 	    	//only one card
             wi_set_channel(wi[0], G.channel[0]);
+
             G.singlechan = 1;
 
             smartconfig_packet_num[chan] = 0;
@@ -1884,7 +1887,7 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
                              + ( tv0.tv_usec - tv1.tv_usec );
 
                //scan timeout
-               if( cycle_time > 300000 )
+               if( cycle_time > 500000 )
                {
             	  check_monitor(wi, fd_raw, fdh, cards);
             	  check_channel(wi, cards);
@@ -1991,7 +1994,8 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
 	   //printf("Fixchannel: %d", fixchannel);
        wi_set_channel(wi[0], fixchannel);
        G.singlechan = 1;
-	
+       ApChannel = fixchannel;
+
        /* capture one packet */
        FD_ZERO( &rfds );
  
@@ -2176,14 +2180,15 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
     						   else
     						   {
         						   smartconfig_getApInfo(ApBSsid, ApESsid, ApEnc, ApAuth);
+        						   if(strcmp(ApEnc, "WPA/WPA2") == 0 && strcmp(ApAuth, "PSK") ==0)
+        							   strcpy(ApAuth, "psk2-mixed");
+        						   if(strcmp(ApEnc, "WPA2") == 0 && strcmp(ApAuth, "PSK") == 0)
+        							   strcpy(ApAuth, "psk2");
+
         						   printf("SmartconfigResult:");
         						   printf("SourceIP:%u.%u.%u.%u ", srcIP[0], srcIP[1], srcIP[2], srcIP[3]);
-        						   printf("ESsid:%s ApEnc:%s ApAuth:%s ApPasswd:%s ", ApESsid, ApEnc, ApAuth, ApPasswd);
+        						   printf("ESsid:%s ApEnc:%s ApAuth:%s ApPasswd:%s Channel:%d ", ApESsid, ApEnc, ApAuth, ApPasswd, ApChannel);
         						   printf("BSsid:%02X:%02X:%02X:%02X:%02X:%02X\n", ApBSsid[0], ApBSsid[1],ApBSsid[2],ApBSsid[3],ApBSsid[4],ApBSsid[5]);
-        						   if(ApEnc == "WPA/WPA2" && ApAuth == "psk")
-        							   strcpy(ApAuth, "psk2-mixed");
-        						   if(ApEnc == "WPA2" && ApAuth == "psk")
-        							   strcpy(ApAuth, "psk2");
 
     							   goto packet_received;
     						   }
