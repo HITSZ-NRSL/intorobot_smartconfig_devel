@@ -141,8 +141,10 @@ int main(int argc, char** argv) {
 
     bzero(&address,sizeof(address));
     address.sin_family=AF_INET;
-    //address.sin_addr.s_addr=inet_addr(str_ip);
-    address.sin_addr.s_addr=htonl(INADDR_BROADCAST);
+    //change ip to broadcast ip
+    sprintf(str_ip, "%u.%u.%u.255", ip[0], ip[1], ip[3]);
+    address.sin_addr.s_addr=inet_addr(str_ip);
+    //address.sin_addr.s_addr=htonl(INADDR_BROADCAST);
     address.sin_port=htons(port);
 
     //创建一个 UDP socket
@@ -161,9 +163,9 @@ int main(int argc, char** argv) {
 		for(i=0; i<4;i++){
 			buf[7+i] = ip[i];
 		}
-		buf[11] = (unsigned char)total_length;
+		//buf[11] = (unsigned char)total_length;
 		//sprintf(buf,"%c%s%s%c", (unsigned char)ssidpasswd_length, ap_bssid, ip, (unsigned char)total_length);
-        sendto(socket_descriptor,buf,12,0,(struct sockaddr *)&address,sizeof(address));
+        sendto(socket_descriptor,buf,11,0,(struct sockaddr *)&address,sizeof(address));
         usleep(10);
     }
     //  printf("%s, %s, %s, %d, %d " , str_ip, ap_ssid, ap_passwd, total_length, ssidpasswd_length);
