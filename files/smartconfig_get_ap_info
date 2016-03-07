@@ -32,22 +32,26 @@ echo $auth
 password=`echo ${ap_info} | awk '{print $5}'`
 password=${password#*:}
 if [ ! $password ]; then
-	password = none
+	password=none
 fi
 echo $password
-bssid=`echo ${ap_info} | awk '{print $6}'`
+channel=`echo ${ap_info} | awk '{print $6}'`
+channel=${channel#*:}
+echo $channel
+bssid=`echo ${ap_info} | awk '{print $7}'`
 bssid=${bssid#*:}
 echo $bssid
 
 uci set network.wwan='interface'
 uci set network.wwan.proto='dhcp'
 uci commit network
+uci set wireless.@wifi-device[0].channel=${channel}
 uci set wireless.@wifi-iface[1].device='radio0'
 uci set wireless.@wifi-iface[1].network='wwan'
 uci set wireless.@wifi-iface[1].mode='sta'
 uci set wireless.@wifi-iface[1].ssid=${ssid}
 uci set wireless.@wifi-iface[1].key=${password}
-uci set wireless.@wifi-iface[1].encryption=psk2
+uci set wireless.@wifi-iface[1].encryption=${auth}
 uci commit wireless
 /etc/init.d/network restart
 
@@ -58,4 +62,3 @@ echo `smartconfig-response -s ${ssid} -w ${password} -b ${bssid} -p 18266 -i 192
 #echo `smartconfig-response -s ${ssid} -w ${password} -b ${bssid} -p  5557 -i ${source_ip}` 
 
 exit 1
-
