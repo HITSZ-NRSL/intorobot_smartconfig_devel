@@ -32,7 +32,7 @@ endif
 
 
 SBINFILES       = aireplay-ng$(EXE) airodump-ng$(EXE) airserv-ng$(EXE) \
-		  airtun-ng$(EXE) airbase-ng$(EXE) besside-ng$(EXE) smartconfig-dump$(EXE) smartconfig-response$(EXE) smartconfig-server$(EXE) smartconfig-test$(EXE)
+		  airtun-ng$(EXE) airbase-ng$(EXE) besside-ng$(EXE) smartconfig-dump$(EXE) smartconfig-response$(EXE) smartconfig-server$(EXE) smartconfig-test$(EXE) smartconfig-udptest$(EXE)
 		  
 OPTFILES	= aircrack-ng-opt-prof_gen aircrack-ng-opt \
 		  aircrack-ng-opt-prof prof/*
@@ -58,6 +58,7 @@ OBJS_SCD	= smartconfig-dump.o common.o crypto.o uniqueiv.o osdep/radiotap/radiot
 OBJS_SCR	= smartconfig-response.o common.o crypto.o uniqueiv.o osdep/radiotap/radiotap.o
 OBJS_SCS	= smartconfig-server.o common.o crypto.o uniqueiv.o osdep/radiotap/radiotap.o
 OBJS_SCT	= smartconfig-test.o common.o crypto.o uniqueiv.o osdep/radiotap/radiotap.o
+OBJS_SCUT	= smartconfig-udptest.o common.o crypto.o uniqueiv.o osdep/radiotap/radiotap.o
 ifneq ($(OSNAME), Linux)
 	OBJS_ADU	+= osdep/common.o
 	OBJS_SCR	+= osdep/common.o
@@ -163,6 +164,9 @@ smartconfig-server$(EXE): $(OBJS_SCS) $(LIBOSD)
 smartconfig-test$(EXE): $(OBJS_SCT) $(LIBOSD)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS_SCT) -o $(@) $(LIBS) $(LIBSSL) -lpthread $(LIBPCRE)
 
+smartconfig-udptest$(EXE): $(OBJS_SCUT) $(LIBOSD)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS_SCUT) -o $(@) $(LIBS) $(LIBSSL) -lpthread $(LIBPCRE)
+
 airserv-ng$(EXE): $(OBJS_AS) $(LIBOSD)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS_AS) -o $(@) $(LIBS)
 
@@ -238,6 +242,7 @@ uninstall:
 	-rm -f $(DESTDIR)$(sbindir)/smartconfig-response$(EXE)
 	-rm -f $(DESTDIR)$(sbindir)/smartconfig-server$(EXE)
 	-rm -f $(DESTDIR)$(sbindir)/smartconfig-test$(EXE)
+	-rm -f $(DESTDIR)$(sbindir)/smartconfig-udptest$(EXE)
 	-rm -f $(DESTDIR)$(sbindir)/airserv-ng$(EXE)
 	-rm -f $(DESTDIR)$(sbindir)/airtun-ng$(EXE)
 	-rm -f $(DESTDIR)$(sbindir)/aireplay-ng$(EXE)
