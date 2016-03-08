@@ -37,6 +37,7 @@ struct option long_options[] = {
 
 int main(int argc, char** argv)
 {
+	char * rbracket_pos; //used for fix the jason string problem
 	int port=18266;
     int sin_len;
     char message[256];
@@ -99,7 +100,11 @@ int main(int argc, char** argv)
     {
     	//strcpy(message, "");
         recvfrom(socket_descriptor,message,sizeof(message),0,(struct sockaddr *)&sin,&sin_len);
+        rbracket_pos = strpbrk(message, "}");
+        if(rbracket_pos != NULL)
+        	rbracket_pos[1] = 0x00;
         printf("Received: %s\n" , message);
+
         if(strcmp(message, "{\"command\":\"hello\"}") == 0)
         	break;
 
@@ -111,7 +116,7 @@ int main(int argc, char** argv)
 
     bzero(&sout,sizeof(sout));
     sout.sin_family=AF_INET;
-    sout.sin_addr.s_addr=inet_addr("192.168.11.111");
+    sout.sin_addr.s_addr=inet_addr("192.168.1.105");
     sout.sin_port=htons(out_port);
 
     //创建一个 UDP socket
