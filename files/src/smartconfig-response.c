@@ -136,7 +136,7 @@ int main(int argc, char** argv) {
      my_addr.sin_port=htons(port);
      //change ip to broadcast ip
      sprintf(str_ip, "%d.%d.%d.255", ip[0], ip[1], ip[2]);
-     printf("%s", str_ip);
+     printf("the broadcast ip is:%s", str_ip);
      my_addr.sin_addr.s_addr=inet_addr(str_ip);
      bzero(&(my_addr.sin_zero),8);
 
@@ -155,7 +155,7 @@ int main(int argc, char** argv) {
 //        exit(1);
 //    }
     
-     for(iter=0;iter<=500;iter++)
+     for(iter=0;iter<=1000;iter++)
      {
 		buf[0] = (unsigned char)ssidpasswd_length;
 
