@@ -1734,6 +1734,7 @@ void smartconfig_decoder(int caplen, unsigned char* result)
 
 int smartconfig_filter_packet( unsigned char *h80211, int caplen, unsigned char* ap_bssid, unsigned char* dst_mac_05, int *type)
 {
+	int i;
     unsigned char bssid[6];
     unsigned char dst_mac[6] = {0,0,0,0,0,0};
     type = 1;
@@ -1775,13 +1776,15 @@ int smartconfig_filter_packet( unsigned char *h80211, int caplen, unsigned char*
         	break;  //WDS -> Transmitter taken as BSSID
     }
 
+#if 1
     if ((h80211[1] & 3) == 2 || (h80211[1] & 3) == 1)
     //if ((h80211[1] & 3) == 1)
 	{
-
     	if((dst_mac[3] == dst_mac[4] && dst_mac[4] == dst_mac[5]) || (bssid[3] == bssid[4] && bssid[4] == bssid[5]))
+    	{
     		if(dst_mac[0] != 0xff && dst_mac[1] !=0xff && dst_mac[2] != 0xff && dst_mac[3] != 0xff && dst_mac[4] != 0xff && dst_mac[5]!=0xff )
     		{
+#endif
 				printf("The dst mac address is %02X:%02X:%02X:%02X:%02X:%02X ", dst_mac[0], dst_mac[1],dst_mac[2],dst_mac[3],dst_mac[4],dst_mac[5]);
 				printf("The non bssid is %02X:%02X:%02X:%02X:%02X:%02X \n", bssid[0], bssid[1],bssid[2],bssid[3],bssid[4],bssid[5]);
 				printf("The caplen: %d", caplen);
@@ -1793,8 +1796,12 @@ int smartconfig_filter_packet( unsigned char *h80211, int caplen, unsigned char*
 				dst_mac_05 = dst_mac[5];
 				memcpy( ap_bssid, bssid, 6 );  //FromDS
 				return(1);
+#if 1
 			}
+    	}
+#endif
 	}
+
 	return(-1);
 }
 
@@ -1822,6 +1829,7 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
     unsigned char data_byte_index = 0;
     unsigned char bssid[6];
     unsigned char ApBSsid[6];
+    int  ApChannel;
     char ApPasswd[30]; //max 30 password long
     char ApESsid[30];
     char ApEnc[10];
@@ -1856,9 +1864,11 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
     	{
 	    	printf("CH: %d \n", G.channels[chan]);
 	    	G.channel[0] = G.channels[chan];
+	    	ApChannel = G.channels[chan]; //current channel
 
 	    	//only one card
             wi_set_channel(wi[0], G.channel[0]);
+
             G.singlechan = 1;
 
             smartconfig_packet_num[chan] = 0;
@@ -1877,7 +1887,7 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
                              + ( tv0.tv_usec - tv1.tv_usec );
 
                //scan timeout
-               if( cycle_time > 300000 )
+               if( cycle_time > 500000 )
                {
             	  check_monitor(wi, fd_raw, fdh, cards);
             	  check_channel(wi, cards);
@@ -1984,7 +1994,8 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
 	   //printf("Fixchannel: %d", fixchannel);
        wi_set_channel(wi[0], fixchannel);
        G.singlechan = 1;
-	
+       ApChannel = fixchannel;
+
        /* capture one packet */
        FD_ZERO( &rfds );
  
@@ -2169,10 +2180,16 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
     						   else
     						   {
         						   smartconfig_getApInfo(ApBSsid, ApESsid, ApEnc, ApAuth);
+        						   if(strcmp(ApEnc, "WPA/WPA2") == 0 && strcmp(ApAuth, "PSK") ==0)
+        							   strcpy(ApAuth, "psk2-mixed");
+        						   if(strcmp(ApEnc, "WPA2") == 0 && strcmp(ApAuth, "PSK") == 0)
+        							   strcpy(ApAuth, "psk2");
+
         						   printf("SmartconfigResult:");
         						   printf("SourceIP:%u.%u.%u.%u ", srcIP[0], srcIP[1], srcIP[2], srcIP[3]);
-        						   printf("ESsid:%s ApEnc:%s ApAuth:%s ApPasswd:%s ", ApESsid, ApEnc, ApAuth, ApPasswd);
+        						   printf("ESsid:%s ApEnc:%s ApAuth:%s ApPasswd:%s Channel:%d ", ApESsid, ApEnc, ApAuth, ApPasswd, ApChannel);
         						   printf("BSsid:%02X:%02X:%02X:%02X:%02X:%02X\n", ApBSsid[0], ApBSsid[1],ApBSsid[2],ApBSsid[3],ApBSsid[4],ApBSsid[5]);
+
     							   goto packet_received;
     						   }
     					   }

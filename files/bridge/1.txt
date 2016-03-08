@@ -1,0 +1,35 @@
+28c28
+< from socket import AF_INET, SOCK_DGRAM, SOL_SOCKET, SO_REUSEADDR# SO_ERROR
+---
+> from socket import AF_INET, SOCK_DGRAM, SOL_SOCKET, SO_REUSEADDR, SO_BROADCAST # SO_ERROR
+128a129,134
+>   def set_broadcast(self, v):
+>     if v:
+>       self.sock.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
+>     else:
+>       self.sock.setsockopt(SOL_SOCKET, SO_BROADCAST, 0)
+> 
+189a196
+>     sock.set_broadcast(False)
+194a202,214
+> class WRITE_BEGIN_BROADCAST_Command:
+>   def run(self, data):
+>     id = ord(data[0])
+>     sock = udp_sockets.get(id)
+>     if sock is None:
+>       return chr(0)
+>     port = (ord(data[1]) << 8) + ord(data[2])
+>     sock.set_broadcast(True)
+>     if sock.send_start('<broadcast>', port) is None:
+>       return chr(0)
+>     else:
+>       return chr(1)
+> 
+273a294
+>   command_processor.register('v', WRITE_BEGIN_BROADCAST_Command())
+287a309,313
+>   udp.set_broadcast(True)
+>   udp.send_start('<broadcast>', 5555)
+>   udp.send('hi')
+>   udp.send_end()
+>   udp.set_broadcast(False)
