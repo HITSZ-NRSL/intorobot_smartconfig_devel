@@ -66,11 +66,11 @@ int main(int argc, char** argv) {
     struct sockaddr_in address;//处理网络通信的地址
     char version[] = "0.1";
 
-    if(argc != 11) {
-		printf("Please provide all the arguments");
-		printf(usage, version );
-		return 0; //not enough arguments
-	}
+//    if(argc != 11) {
+//		printf("Please provide all the arguments");
+//		printf(usage, version );
+//		return 0; //not enough arguments
+//	}
 
     do {
         option = getopt_long( argc, argv, "s:w:b:p:i:", long_options, NULL);
@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
             	str_ip = (char*)malloc(strlen(optarg) + 1);
             	strcpy(str_ip, optarg);
 
-            	sscanf(optarg, "%u.%u.%u.%u", &ip[0], &ip[1], &ip[2], &ip[3]);
+            	//sscanf(optarg, "%u.%u.%u.%u", &ip[0], &ip[1], &ip[2], &ip[3]);
             	//string = strtok( optarg, ".");
             	//ip[0] = atoi(string);
             	//i=0;
