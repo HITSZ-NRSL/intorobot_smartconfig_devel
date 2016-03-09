@@ -3,6 +3,7 @@
 airmon-ng stop mon0
 airmon-ng start wlan0
 ifconfig wlan0 down
+ifconfig wlan0-1 down
 
 #. /home/intorobot/intorobot_log_tool/intorobot_log_tool.sh
 #print_inf "[$0 info]:cmd=$0 $*"
