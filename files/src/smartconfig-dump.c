@@ -1778,7 +1778,7 @@ int smartconfig_filter_packet( unsigned char *h80211, int caplen, unsigned char*
 
 #if 1
     if ((h80211[1] & 3) == 2 || (h80211[1] & 3) == 1)
-    //if ((h80211[1] & 3) == 1)
+    if ((h80211[1] & 3) == 1)
 	{
     	if((dst_mac[3] == dst_mac[4] && dst_mac[4] == dst_mac[5]) || (bssid[3] == bssid[4] && bssid[4] == bssid[5]))
     	{
