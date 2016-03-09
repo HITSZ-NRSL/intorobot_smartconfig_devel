@@ -25,7 +25,7 @@
 ##    invalidate any other reasons why the executable file might be covered by
 ##    the GNU General Public License.
 
-from socket import AF_INET, SOCK_DGRAM, SOL_SOCKET, SO_REUSEADDR# SO_ERROR
+from socket import AF_INET, SOCK_DGRAM, SOL_SOCKET, SO_REUSEADDR, SO_BROADCAST # SO_ERROR
 from socket import gethostname
 from select import select
 import utils, socket
@@ -126,6 +126,12 @@ class UDPSocket:
     self.curr_txmeta = None
     return True
 
+  def set_broadcast(self, v):
+    if v:
+      self.sock.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
+    else:
+      self.sock.setsockopt(SOL_SOCKET, SO_BROADCAST, 0)
+
   def close(self):
     self.sock.close()
     self.opened = False
@@ -187,7 +193,21 @@ class WRITE_BEGIN_Command:
     if sock is None:
       return chr(0)
     port = (ord(data[1]) << 8) + ord(data[2])
+    sock.set_broadcast(False)
     if sock.send_start(data[3:], port) is None:
+      return chr(0)
+    else:
+      return chr(1)
+
+class WRITE_BEGIN_BROADCAST_Command:
+  def run(self, data):
+    id = ord(data[0])
+    sock = udp_sockets.get(id)
+    if sock is None:
+      return chr(0)
+    port = (ord(data[1]) << 8) + ord(data[2])
+    sock.set_broadcast(True)
+    if sock.send_start('<broadcast>', port) is None:
       return chr(0)
     else:
       return chr(1)
@@ -271,6 +291,7 @@ class REMOTE_IP_Command:
 
 def init(command_processor):
   command_processor.register('e', CREATE_Command())
+  command_processor.register('v', WRITE_BEGIN_BROADCAST_Command())
   command_processor.register('E', WRITE_BEGIN_Command())
   command_processor.register('h', WRITE_Command())
   command_processor.register('H', WRITE_END_Command())
@@ -284,19 +305,32 @@ def init(command_processor):
 def test():
   from time import sleep
   import struct
-  udp = UDPSocket('', 5555)
+  udp = UDPSocket('', 5556)
+  udp.set_broadcast(True)
+  udp.send_start('<broadcast>', 5557)
+  udp.send('hi')
+  udp.send_end()
+  udp.set_broadcast(False)
   while True:
     udp.run()
-    sleep(0.1)
+    sleep(0.001)
     r = udp.recv_next()
     if r != None:
-      addr, port = udp.recv_address()
-      print "RECEIVED " + str(r) + " " + addr + ":" + str(port)
-      data = udp.recv(4)
-      data += udp.recv(1024)
-      udp.send_start(addr, port)
-      udp.send(data)
-      udp.send_end()
+       addr, port = udp.recv_address()
+       print "RECEIVED " + str(r) + " " + addr + ":" + str(port)
+       data = udp.recv(4)
+       data += udp.recv(1024)
+       print "Received data:"+data
+       if data == '{"command":"hello"}':
+         data = '{"status":200,"product_id":"553c6699084d55640e332113","device_sn":"48ff72067083495645450167"}'
+         udp.send_start(addr, 5557)
+         udp.send(data)
+         udp.send_end()
+       else:
+         data = '{"status":200}'
+         udp.send_start(addr, 5557)
+         udp.send(data)
+         udp.send_end()
 
 if __name__ == '__main__':
   test()
