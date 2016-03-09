@@ -306,14 +306,14 @@ def test():
   from time import sleep
   import struct
   udp = UDPSocket('', 5556)
-  #udp.set_broadcast(True)
-  #udp.send_start('<broadcast>', 5557)
-  #udp.send('hi')
-  #udp.send_end()
-  #udp.set_broadcast(False)
+  udp.set_broadcast(True)
+  udp.send_start('<broadcast>', 5557)
+  udp.send('hi')
+  udp.send_end()
+  udp.set_broadcast(False)
   while True:
     udp.run()
-    sleep(0.1)
+    sleep(0.001)
     r = udp.recv_next()
     if r != None:
        addr, port = udp.recv_address()
@@ -321,10 +321,16 @@ def test():
        data = udp.recv(4)
        data += udp.recv(1024)
        print "Received data:"+data
-       data = '{"status":200,"product_id":"553c6699084d55640e332113","device_sn":"48ff72067083495645450167"}'
-       udp.send_start(addr, 5557)
-       udp.send(data)
-       udp.send_end()
+       if data == '{"command":"hello"}':
+         data = '{"status":200,"product_id":"553c6699084d55640e332113","device_sn":"48ff72067083495645450167"}'
+         udp.send_start(addr, 5557)
+         udp.send(data)
+         udp.send_end()
+       else:
+         data = '{"status":200}'
+         udp.send_start(addr, 5557)
+         udp.send(data)
+         udp.send_end()
 
 if __name__ == '__main__':
   test()

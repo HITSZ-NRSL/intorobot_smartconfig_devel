@@ -53,13 +53,13 @@ uci set wireless.@wifi-iface[1].ssid=${ssid}
 uci set wireless.@wifi-iface[1].key=${password}
 uci set wireless.@wifi-iface[1].encryption=${auth}
 uci commit wireless
-#uci set firewall.@zone[1].network='wan wan6 wwan'
-#uci commit firewall
+uci set firewall.@zone[1].network='wan wan6'
+uci commit firewall
 
 /etc/init.d/network restart
 
 while :;do
-	ping ${source_ip} -w 1 -c 1
+	ping ${source_ip} -w 100 -c 1
 	if [ $? == 0 ]
 	then
 		break
@@ -71,5 +71,8 @@ echo `smartconfig-response -s ${ssid} -w ${password} -b ${bssid} -p 18266 -i ${s
 
 #echo "send data to port 5557"
 #echo `smartconfig-response -s ${ssid} -w ${password} -b ${bssid} -p  5557 -i ${source_ip}` 
+
+#uci set firewall.@zone[1].network='wan wan6 wwan'
+#uci commit firewall
 
 exit 1

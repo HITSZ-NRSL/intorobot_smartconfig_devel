@@ -155,7 +155,7 @@ int main(int argc, char** argv) {
 //        exit(1);
 //    }
     
-     for(iter=0;iter<=1000;iter++)
+     for(iter=0;iter<=200;iter++)
      {
 		buf[0] = (unsigned char)ssidpasswd_length;
 
@@ -174,9 +174,9 @@ int main(int argc, char** argv) {
         	perror("sendto fail");
         	exit(-1);
         };
-    	printf("Sent length: %d \n", sent_len);
-        for(i = 0; i<11; i++)
-    		printf("%02X ", (unsigned char)buf[i]);
+    	//printf("Sent length: %d \n", sent_len);
+        //for(i = 0; i<11; i++)
+    	//	printf("%02X ", (unsigned char)buf[i]);
         usleep(10000);
      }
      //  printf("%s, %s, %s, %d, %d " , str_ip, ap_ssid, ap_passwd, total_length, ssidpasswd_length);
