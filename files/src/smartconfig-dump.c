@@ -514,9 +514,10 @@ int dump_add_packet( unsigned char *h80211, int caplen, struct rx_info *ri, int 
         case  0: memcpy( bssid, h80211 + 16, 6 ); break;  //Adhoc
         case  1: memcpy( bssid, h80211 +  4, 6 ); break;  //ToDS
         case  2: memcpy( bssid, h80211 + 10, 6 ); break;  //FromDS
-        case  3: memcpy( bssid, h80211 + 10, 6 ); break;  //WDS -> Transmitter taken as BSSID
+        case  3: memcpy( bssid, h80211 + 10, 6 ); return;  //WDS -> Transmitter taken as BSSID
     }
-
+    
+   
     /* update our chained list of access points */
 
     ap_cur = G.ap_1st;
@@ -1322,83 +1323,83 @@ write_packet:
                     }
                 }
 
-                /* not found in either AP list or ST list, look through NA list */
-                na_cur = G.na_1st;
-                na_prv = NULL;
-
-                while( na_cur != NULL )
-                {
-                    if( ! memcmp( na_cur->namac, namac, 6 ) )
-                        break;
-
-                    na_prv = na_cur;
-                    na_cur = na_cur->next;
-                }
-
-                /* update our chained list of unknown stations */
-                /* if it's a new mac, add it */
-
-                if( na_cur == NULL )
-                {
-                    if( ! ( na_cur = (struct NA_info *) malloc(
-                                    sizeof( struct NA_info ) ) ) )
-                    {
-                        perror( "malloc failed" );
-                        return( 1 );
-                    }
-
-                    memset( na_cur, 0, sizeof( struct NA_info ) );
-
-                    if( G.na_1st == NULL )
-                        G.na_1st = na_cur;
-                    else
-                        na_prv->next  = na_cur;
-
-                    memcpy( na_cur->namac, namac, 6 );
-
-                    na_cur->prev = na_prv;
-
-                    gettimeofday(&(na_cur->tv), NULL);
-                    na_cur->tinit = time( NULL );
-                    na_cur->tlast = time( NULL );
-
-                    na_cur->power   = -1;
-                    na_cur->channel = -1;
-                    na_cur->ack     = 0;
-                    na_cur->ack_old = 0;
-                    na_cur->ackps   = 0;
-                    na_cur->cts     = 0;
-                    na_cur->rts_r   = 0;
-                    na_cur->rts_t   = 0;
-                }
-
-                /* update the last time seen & power*/
-
-                na_cur->tlast = time( NULL );
-                na_cur->power = ri->ri_power;
-                na_cur->channel = ri->ri_channel;
-
-                switch(h80211[0] & 0xF0)
-                {
-                    case 0xB0:
-                        if(p == h80211+4)
-                            na_cur->rts_r++;
-                        if(p == h80211+10)
-                            na_cur->rts_t++;
-                        break;
-
-                    case 0xC0:
-                        na_cur->cts++;
-                        break;
-
-                    case 0xD0:
-                        na_cur->ack++;
-                        break;
-
-                    default:
-                        na_cur->other++;
-                        break;
-                }
+//                /* not found in either AP list or ST list, look through NA list */
+//                na_cur = G.na_1st;
+//                na_prv = NULL;
+//
+//                while( na_cur != NULL )
+//                {
+//                    if( ! memcmp( na_cur->namac, namac, 6 ) )
+//                        break;
+//
+//                    na_prv = na_cur;
+//                    na_cur = na_cur->next;
+//                }
+//
+//                /* update our chained list of unknown stations */
+//                /* if it's a new mac, add it */
+//
+//                if( na_cur == NULL )
+//                {
+//                    if( ! ( na_cur = (struct NA_info *) malloc(
+//                                    sizeof( struct NA_info ) ) ) )
+//                    {
+//                        perror( "malloc failed" );
+//                        return( 1 );
+//                    }
+//
+//                    memset( na_cur, 0, sizeof( struct NA_info ) );
+//
+//                    if( G.na_1st == NULL )
+//                        G.na_1st = na_cur;
+//                    else
+//                        na_prv->next  = na_cur;
+//
+//                    memcpy( na_cur->namac, namac, 6 );
+//
+//                    na_cur->prev = na_prv;
+//
+//                    gettimeofday(&(na_cur->tv), NULL);
+//                    na_cur->tinit = time( NULL );
+//                    na_cur->tlast = time( NULL );
+//
+//                    na_cur->power   = -1;
+//                    na_cur->channel = -1;
+//                    na_cur->ack     = 0;
+//                    na_cur->ack_old = 0;
+//                    na_cur->ackps   = 0;
+//                    na_cur->cts     = 0;
+//                    na_cur->rts_r   = 0;
+//                    na_cur->rts_t   = 0;
+//                }
+//
+//                /* update the last time seen & power*/
+//
+//                na_cur->tlast = time( NULL );
+//                na_cur->power = ri->ri_power;
+//                na_cur->channel = ri->ri_channel;
+//
+//                switch(h80211[0] & 0xF0)
+//                {
+//                    case 0xB0:
+//                        if(p == h80211+4)
+//                            na_cur->rts_r++;
+//                        if(p == h80211+10)
+//                            na_cur->rts_t++;
+//                        break;
+//
+//                    case 0xC0:
+//                        na_cur->cts++;
+//                        break;
+//
+//                    case 0xD0:
+//                        na_cur->ack++;
+//                        break;
+//
+//                    default:
+//                        na_cur->other++;
+//                        break;
+//                }
 
                 /*grab next mac (for rts frames)*/
                 p+=6;
@@ -1760,9 +1761,9 @@ int smartconfig_filter_packet( unsigned char *h80211, int caplen, unsigned char*
     /* locate the access point's MAC address */
     switch( h80211[1] & 3 )
     {
-        case  0:
-        	memcpy( bssid, h80211 + 16, 6 );
-        	break;  //Adhoc
+        //case  0:
+        //	memcpy( bssid, h80211 + 16, 6 );
+        //	break;  //Adhoc
         case  1:
         	memcpy( bssid, h80211 +  4, 6 );
             memcpy( dst_mac, h80211 +  16, 6 );  //DS
@@ -1771,9 +1772,9 @@ int smartconfig_filter_packet( unsigned char *h80211, int caplen, unsigned char*
         	memcpy( bssid, h80211 + 10, 6 );
             memcpy( dst_mac, h80211 +  4, 6 );  //DS
         	break;  //FromDS
-        case  3:
-        	memcpy( bssid, h80211 + 10, 6 );
-        	break;  //WDS -> Transmitter taken as BSSID
+        //case  3:
+        //	memcpy( bssid, h80211 + 10, 6 );
+        //	break;  //WDS -> Transmitter taken as BSSID
     }
 
 #if 1
@@ -1786,7 +1787,7 @@ int smartconfig_filter_packet( unsigned char *h80211, int caplen, unsigned char*
     		{
 #endif
 				printf("The dst mac address is %02X:%02X:%02X:%02X:%02X:%02X ", dst_mac[0], dst_mac[1],dst_mac[2],dst_mac[3],dst_mac[4],dst_mac[5]);
-				printf("The non bssid is %02X:%02X:%02X:%02X:%02X:%02X \n", bssid[0], bssid[1],bssid[2],bssid[3],bssid[4],bssid[5]);
+				printf("The source bssid is %02X:%02X:%02X:%02X:%02X:%02X \n", bssid[0], bssid[1],bssid[2],bssid[3],bssid[4],bssid[5]);
 				printf("The caplen: %d", caplen);
 				if((h80211[1] & 3) == 2)
 					printf("Type: %d\n", 2);
@@ -1811,10 +1812,11 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
     int caplen=0, fd_is_set, chan_count;
     int wi_read_failed=0;
     int chan, i, k;
+    int count =0;
     fd_set  rfds;
     char ifnam[64];
     struct rx_info ri;
-    unsigned char      buffer[4096];
+    unsigned char      buffer[2048];
     unsigned char      *h80211;
     int *smartconfig_packet_num; //the num of packet that satisfy the format of smartconfig packet, i.e, the last three destination mac values are the same
     unsigned char fixchannel = 0;
@@ -1887,7 +1889,7 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
                              + ( tv0.tv_usec - tv1.tv_usec );
 
                //scan timeout
-               if( cycle_time > 500000 )
+               if( cycle_time > 200000 )
                {
             	  check_monitor(wi, fd_raw, fdh, cards);
             	  check_channel(wi, cards);
@@ -1963,6 +1965,7 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
 		                }
 		                read_pkts++;
 		                dump_add_packet( h80211, caplen, &ri, 0 );
+
 		                wi_read_failed = 0;
 						if(smartconfig_filter_packet(h80211, caplen, bssid, &dst_mac_05, &packet_type) == 1)
 						{
@@ -1989,12 +1992,13 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
    // printf("Ap num: %d", get_ap_list_count());
    // print_ap_list();
    mac_array_index = 0;
+   ApChannel = fixchannel;
    while(1){
        //Fix the channel
 	   //printf("Fixchannel: %d", fixchannel);
-       wi_set_channel(wi[0], fixchannel);
-       G.singlechan = 1;
-       ApChannel = fixchannel;
+       //wi_set_channel(wi[0], fixchannel);
+       //G.singlechan = 1;
+       //ApChannel = fixchannel;
 
        /* capture one packet */
        FD_ZERO( &rfds );
@@ -2054,9 +2058,11 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
     			   break;
 			//                         return 1;
     		   }
-    		    dump_add_packet( h80211, caplen, &ri, 0 );
+    		   
+    		   dump_add_packet( h80211, caplen, &ri, 0 );
     		   if(smartconfig_filter_packet(h80211, caplen, bssid, &dst_mac_05, &packet_type) == 1)
     		   {
+					//continue;
     			   if(packet_type_cur != packet_type)
     				   continue;
     			   if(is_guidecode_received == 1 && enc_constant >= 0)
@@ -2067,7 +2073,7 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
     				   {
     					   unsigned char de_value[3];
     					   caplen -= enc_constant;
-    					   //printf("The bssid is %02X:%02X:%02X:%02X:%02X:%02X \n", ApBSsid[0], ApBSsid[1],ApBSsid[2],ApBSsid[3],ApBSsid[4],ApBSsid[5]);
+    					   printf("The bssid is %02X:%02X:%02X:%02X:%02X:%02X \n", ApBSsid[0], ApBSsid[1],ApBSsid[2],ApBSsid[3],ApBSsid[4],ApBSsid[5]);
 
     					   if(mac_05_cur != dst_mac_05)
     					   {
