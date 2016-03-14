@@ -305,11 +305,16 @@ def init(command_processor):
 def test():
   from time import sleep
   import struct
-  udp = UDPSocket('', 5556)
+  udp = UDPSocket('192.168.8.216', 5558)
   udp.set_broadcast(True)
-  udp.send_start('<broadcast>', 5557)
-  udp.send('hi')
-  udp.send_end()
+  #udp.set_broadcast(False)
+  while True:
+    udp.send_start('192.168.8.1', 5556)
+    udp.send('{"command":"hello"}')
+    udp.send_end()
+    print "test"
+    udp.run()
+    sleep(1)
   udp.set_broadcast(False)
   while True:
     udp.run()
