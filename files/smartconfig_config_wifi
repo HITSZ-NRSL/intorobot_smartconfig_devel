@@ -65,6 +65,7 @@ while :;do
 	then
 		break
 	fi
+	usleep 500000
 done
 
 echo "send data to port 18266"
