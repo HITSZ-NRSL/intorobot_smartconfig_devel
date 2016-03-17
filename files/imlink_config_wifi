@@ -34,8 +34,10 @@ auth=${auth#*:}
 echo $auth
 password=`echo ${ap_info} | awk '{print $5}'`
 password=${password#*:}
-if [ ! $password ]; then
-	password=none
+if [ ! $password ]
+then
+   auth='none' 
+   password='NULL'
 fi
 echo $password
 channel=`echo ${ap_info} | awk '{print $6}'`
@@ -62,26 +64,31 @@ uci commit firewall
 /etc/init.d/firewall restart
 /etc/init.d/network restart
 
+rgb_control blink 255 0 0 400
 count=1;
 while :;do
-	ping ${source_ip} -w 100 -c 1
-	if [ $? == 0 ]
-	then
-		break
-	fi
-        count=$(($count+1))
-        echo $count
-        if [ $count -gt 150 ]
-        then
-            echo "Ping timeout"
-            exit 1
-        fi
-	usleep 100000 
+  ping ${source_ip} -w50 -c 1
+  if [ $? == 0 ]
+  then
+    break
+  fi
+  count=$(($count+1))
+  echo $count
+  if [ $count -gt 200 ]
+  then
+    rgb_control blink 255 0 0 3000
+    echo "Ping timeout"
+    exit 1
+  fi
+  usleep 100000 
 done
 
+rgb_control blink 255 0 0 100
 echo "send data to port 18266"
-echo `smartconfig-response -s ${ssid} -w ${password} -b ${bssid} -p 18266 -i ${source_ip}` 
-
+while :;do 
+   smartconfig-response -s ${ssid} -w ${password} -b ${bssid} -p 18266 -i ${source_ip}  
+   usleep 500000
+done
 #uci set firewall.@zone[1].network='wan wan6 wwan'
 #uci commit firewall
 #/etc/init.d/firewall restart
