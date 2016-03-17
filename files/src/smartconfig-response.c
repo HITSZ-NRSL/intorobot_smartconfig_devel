@@ -155,7 +155,7 @@ int main(int argc, char** argv) {
 //        exit(1);
 //    }
     
-     for(iter=0;iter<=200;iter++)
+     for(iter=0;iter<=800;iter++)
      {
 		buf[0] = (unsigned char)ssidpasswd_length;
 
