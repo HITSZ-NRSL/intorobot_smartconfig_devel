@@ -7,8 +7,8 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=molmc-smartconfig
-PKG_VERSION:=0.1
+PKG_NAME:=molmc-imlink
+PKG_VERSION:=1.0
 PKG_RELEASE:=1
 PKG_LICENSE:=GPLv2
 
@@ -20,7 +20,7 @@ PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/molmc-smartconfig
+define Package/molmc-imlink
   SECTION:=net
   CATEGORY:=Intorobot
   DEPENDS:=+libpcap +libpthread +libopenssl +libnl +wireless-tools +ethtool
@@ -29,7 +29,7 @@ define Package/molmc-smartconfig
   MAINTAINER:=CH <support@molmc.com>
 endef
 
-define Package/molmc-smartconfig/description
+define Package/molmc-imlink/description
   Smartconfig tools for quick wifi-connection
 endef
 
@@ -48,16 +48,14 @@ define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) $(MAKE_FLAGS)
 endef
 
-define Package/molmc-smartconfig/install
+define Package/molmc-imlink/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/airodump-ng $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/smartconfig-dump $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/smartconfig-response $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/smartconfig-server $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/smartconfig_config_wifi $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/imlink-dump $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/imlink-response $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/imlink_config_wifi $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/sc_config_kill $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/airmon-ng $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/airmon-ng $(1)/usr/sbin/imlink-mon
 endef
 
-$(eval $(call BuildPackage,molmc-smartconfig))
+$(eval $(call BuildPackage,molmc-imlink))

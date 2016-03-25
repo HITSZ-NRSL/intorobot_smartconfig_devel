@@ -15,7 +15,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include "smartconfig-response.h"
+#include "imlink-response.h"
 
 int port=5557;
 //the response packet format is: ApSsid, ApPasswd, mac地址，ip地址，数据总长度．
