@@ -1,0 +1,25 @@
+#!/bin/sh
+
+#kill already run smartconfig processes
+PROCESSES="smartconfig|ping"
+match=`ps -w | grep -E $PROCESSES | grep -v grep | wc -l`               
+echo $match
+if [ $match -gt 0 ]
+then                                        
+    printf "\n\n"                   
+    echo "Found $match processes that could cause trouble."
+    echo "kill them!"
+    echo -e "\nPID\tName"
+fi
+
+i=1                                                                    
+while [ $i -le $match ]                                                
+do                                                                     
+    pid=`ps | grep -E $PROCESSES | grep -v grep | head -n $i | tail -n 1 | awk '{print $1}'`
+    pname=`ps | grep -E $PROCESSES | grep -v grep | head -n $i | tail -n 1 | awk '{print $5}'`
+    printf "$pid\t$pname\n"                                                            
+    kill $pid                                                                          
+    i=$(($i+1))                                                                            
+done 
+
+exit 0

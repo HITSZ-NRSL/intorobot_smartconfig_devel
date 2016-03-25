@@ -40,7 +40,7 @@
 #include <sys/time.h>
 
 #ifndef TIOCGWINSZ
-	#include <sys/termios.h>
+#include <sys/termios.h>
 #endif
 
 #include <netinet/in.h>
@@ -74,16 +74,18 @@
 #include "common.h"
 
 #ifdef USE_GCRYPT
-	GCRY_THREAD_OPTION_PTHREAD_IMPL;
+GCRY_THREAD_OPTION_PTHREAD_IMPL;
 #endif
 
+unsigned char en_printinfo = 1;
+
 void reset_term() {
-  struct termios oldt,
-                 newt;
-  tcgetattr( STDIN_FILENO, &oldt );
-  newt = oldt;
-  newt.c_lflag |= ( ICANON | ECHO );
-  tcsetattr( STDIN_FILENO, TCSANOW, &newt );
+    struct termios oldt,
+        newt;
+    tcgetattr( STDIN_FILENO, &oldt );
+    newt = oldt;
+    newt.c_lflag |= ( ICANON | ECHO );
+    tcsetattr( STDIN_FILENO, TCSANOW, &newt );
 }
 
 void resetSelection()
@@ -185,8 +187,8 @@ int check_shared_key(unsigned char *h80211, int caplen)
     if(textlen+4 != G.sk_len2)
     {
         snprintf(G.message, sizeof(G.message), "][ Broken SKA: %02X:%02X:%02X:%02X:%02X:%02X ",
-                    *(G.sharedkey[0]+m_bmac), *(G.sharedkey[0]+m_bmac+1), *(G.sharedkey[0]+m_bmac+2),
-                *(G.sharedkey[0]+m_bmac+3), *(G.sharedkey[0]+m_bmac+4), *(G.sharedkey[0]+m_bmac+5));
+                 *(G.sharedkey[0]+m_bmac), *(G.sharedkey[0]+m_bmac+1), *(G.sharedkey[0]+m_bmac+2),
+                 *(G.sharedkey[0]+m_bmac+3), *(G.sharedkey[0]+m_bmac+4), *(G.sharedkey[0]+m_bmac+5));
         return 1;
     }
 
@@ -248,8 +250,8 @@ int check_shared_key(unsigned char *h80211, int caplen)
     }
 
     snprintf(G.message, sizeof(G.message), "][ %d bytes keystream: %02X:%02X:%02X:%02X:%02X:%02X ",
-                textlen+4, *(G.sharedkey[0]+m_bmac), *(G.sharedkey[0]+m_bmac+1), *(G.sharedkey[0]+m_bmac+2),
-              *(G.sharedkey[0]+m_bmac+3), *(G.sharedkey[0]+m_bmac+4), *(G.sharedkey[0]+m_bmac+5));
+             textlen+4, *(G.sharedkey[0]+m_bmac), *(G.sharedkey[0]+m_bmac+1), *(G.sharedkey[0]+m_bmac+2),
+             *(G.sharedkey[0]+m_bmac+3), *(G.sharedkey[0]+m_bmac+4), *(G.sharedkey[0]+m_bmac+5));
 
     memset(G.sharedkey, '\x00', 512*3);
     /* ok, keystream saved */
@@ -420,7 +422,7 @@ int list_check_decloak(struct pkt_buf **list, int length, unsigned char* packet)
                 }
             }
             if(correct == 1)
-                    return 0;   //found decloaking!
+                return 0;   //found decloaking!
         }
         next = next->next;
     }
@@ -514,9 +516,10 @@ int dump_add_packet( unsigned char *h80211, int caplen, struct rx_info *ri, int 
         case  0: memcpy( bssid, h80211 + 16, 6 ); break;  //Adhoc
         case  1: memcpy( bssid, h80211 +  4, 6 ); break;  //ToDS
         case  2: memcpy( bssid, h80211 + 10, 6 ); break;  //FromDS
-        case  3: memcpy( bssid, h80211 + 10, 6 ); break;  //WDS -> Transmitter taken as BSSID
+        case  3: memcpy( bssid, h80211 + 10, 6 ); return;  //WDS -> Transmitter taken as BSSID
     }
-
+    
+   
     /* update our chained list of access points */
 
     ap_cur = G.ap_1st;
@@ -536,7 +539,7 @@ int dump_add_packet( unsigned char *h80211, int caplen, struct rx_info *ri, int 
     if( ap_cur == NULL )
     {
         if( ! ( ap_cur = (struct AP_info *) malloc(
-                         sizeof( struct AP_info ) ) ) )
+                    sizeof( struct AP_info ) ) ) )
         {
             perror( "malloc failed" );
             return( 1 );
@@ -619,7 +622,7 @@ int dump_add_packet( unsigned char *h80211, int caplen, struct rx_info *ri, int 
      * or FromDS == 1 and ToDS == 0 */
 
     if( ( ( h80211[1] & 3 ) == 0 &&
-            memcmp( h80211 + 10, bssid, 6 ) == 0 ) ||
+          memcmp( h80211 + 10, bssid, 6 ) == 0 ) ||
         ( ( h80211[1] & 3 ) == 2 ) )
     {
         ap_cur->power_index = ( ap_cur->power_index + 1 ) % NB_PWR;
@@ -722,7 +725,7 @@ int dump_add_packet( unsigned char *h80211, int caplen, struct rx_info *ri, int 
         default: goto skip_station;
     }
 
-skip_station:
+  skip_station:
     /* packet parsing: Beacon or Probe Response */
 
     if( h80211[0] == 0x80 || h80211[0] == 0x50 )
@@ -792,7 +795,7 @@ skip_station:
             length = p[1];
             if(p+2+length > h80211 + caplen) {
 /*                printf("error parsing tags! %p vs. %p (tag: %i, length: %i,position: %i)\n", (p+2+length), (h80211+caplen), type, length, (p-h80211));
-                exit(1);*/
+                  exit(1);*/
                 break;
             }
 
@@ -847,23 +850,23 @@ skip_station:
                 {
                     switch(p[i*4+3])
                     {
-                    case 0x01:
-                        ap_cur->security |= ENC_WEP;
-                        break;
-                    case 0x02:
-                        ap_cur->security |= ENC_TKIP;
-                        break;
-                    case 0x03:
-                        ap_cur->security |= ENC_WRAP;
-                        break;
-                    case 0x04:
-                        ap_cur->security |= ENC_CCMP;
-                        break;
-                    case 0x05:
-                        ap_cur->security |= ENC_WEP104;
-                        break;
-                    default:
-                        break;
+                        case 0x01:
+                            ap_cur->security |= ENC_WEP;
+                            break;
+                        case 0x02:
+                            ap_cur->security |= ENC_TKIP;
+                            break;
+                        case 0x03:
+                            ap_cur->security |= ENC_WRAP;
+                            break;
+                        case 0x04:
+                            ap_cur->security |= ENC_CCMP;
+                            break;
+                        case 0x05:
+                            ap_cur->security |= ENC_WEP104;
+                            break;
+                        default:
+                            break;
                     }
                 }
 
@@ -873,14 +876,14 @@ skip_station:
                 {
                     switch(p[i*4+3])
                     {
-                    case 0x01:
-                        ap_cur->security |= AUTH_MGT;
-                        break;
-                    case 0x02:
-                        ap_cur->security |= AUTH_PSK;
-                        break;
-                    default:
-                        break;
+                        case 0x01:
+                            ap_cur->security |= AUTH_MGT;
+                            break;
+                        case 0x02:
+                            ap_cur->security |= AUTH_PSK;
+                            break;
+                        default:
+                            break;
                     }
                 }
 
@@ -907,7 +910,7 @@ skip_station:
         {
             //successful step 2 or 4 (coming from the AP)
             if(memcmp(h80211+28, "\x00\x00", 2) == 0 &&
-                (h80211[26] == 0x02 || h80211[26] == 0x04))
+               (h80211[26] == 0x02 || h80211[26] == 0x04))
             {
                 ap_cur->security &= ~(AUTH_OPN | AUTH_PSK | AUTH_MGT);
                 if(h80211[24] == 0x00) ap_cur->security |= AUTH_OPN;
@@ -937,9 +940,9 @@ skip_station:
                 memset( ap_cur->essid, 0, 33 );
                 memcpy( ap_cur->essid, p + 2, n );
 
-               for( i = 0; i < n; i++ )
+                for( i = 0; i < n; i++ )
                     if( ap_cur->essid[i] < 32 ||
-                      ( ap_cur->essid[i] > 126 && ap_cur->essid[i] < 160 ) )
+                        ( ap_cur->essid[i] > 126 && ap_cur->essid[i] < 160 ) )
                         ap_cur->essid[i] = '.';
             }
 
@@ -1002,10 +1005,10 @@ skip_station:
                 ap_cur->decloak_detect = 0;
                 list_tail_free(&(ap_cur->packets));
                 memset(G.message, '\x00', sizeof(G.message));
-                    snprintf( G.message, sizeof( G.message ) - 1,
-                        "][ Decloak: %02X:%02X:%02X:%02X:%02X:%02X ",
-                        ap_cur->bssid[0], ap_cur->bssid[1], ap_cur->bssid[2],
-                        ap_cur->bssid[3], ap_cur->bssid[4], ap_cur->bssid[5]);
+                snprintf( G.message, sizeof( G.message ) - 1,
+                          "][ Decloak: %02X:%02X:%02X:%02X:%02X:%02X ",
+                          ap_cur->bssid[0], ap_cur->bssid[1], ap_cur->bssid[2],
+                          ap_cur->bssid[3], ap_cur->bssid[4], ap_cur->bssid[5]);
             }
         }
 
@@ -1021,7 +1024,7 @@ skip_station:
 
             if( h80211[z + 6] == 0x08 && h80211[z + 7] == 0x00 &&
                 ( h80211[1] & 3 ) == 0x01 )
-                    memcpy( ap_cur->lanip, &h80211[z + 20], 4 );
+                memcpy( ap_cur->lanip, &h80211[z + 20], 4 );
 
             if( h80211[z + 6] == 0x08 && h80211[z + 7] == 0x06 )
                 memcpy( ap_cur->lanip, &h80211[z + 22], 4 );
@@ -1077,24 +1080,24 @@ skip_station:
             // Record all data linked to IV to detect WEP Cloaking
             if( G.f_ivs == NULL && G.detect_anomaly)
             {
-				// Only allocate this when seeing WEP AP
-				if (ap_cur->data_root == NULL)
-					ap_cur->data_root = data_init();
+                // Only allocate this when seeing WEP AP
+                if (ap_cur->data_root == NULL)
+                    ap_cur->data_root = data_init();
 
-				// Only works with full capture, not IV-only captures
-				if (data_check(ap_cur->data_root, &h80211[z], &h80211[z + 4])
-					== CLOAKING && ap_cur->EAP_detected == 0)
-				{
+                // Only works with full capture, not IV-only captures
+                if (data_check(ap_cur->data_root, &h80211[z], &h80211[z + 4])
+                    == CLOAKING && ap_cur->EAP_detected == 0)
+                {
 
-					//If no EAP/EAP was detected, indicate WEP cloaking
+                    //If no EAP/EAP was detected, indicate WEP cloaking
                     memset(G.message, '\x00', sizeof(G.message));
                     snprintf( G.message, sizeof( G.message ) - 1,
-                        "][ WEP Cloaking: %02X:%02X:%02X:%02X:%02X:%02X ",
-                        ap_cur->bssid[0], ap_cur->bssid[1], ap_cur->bssid[2],
-                        ap_cur->bssid[3], ap_cur->bssid[4], ap_cur->bssid[5]);
+                              "][ WEP Cloaking: %02X:%02X:%02X:%02X:%02X:%02X ",
+                              ap_cur->bssid[0], ap_cur->bssid[1], ap_cur->bssid[2],
+                              ap_cur->bssid[3], ap_cur->bssid[4], ap_cur->bssid[5]);
 
-				}
-			}
+                }
+            }
 
         }
         else
@@ -1115,7 +1118,7 @@ skip_station:
         /* check ethertype == EAPOL */
         if( h80211[z] == 0x88 && h80211[z + 1] == 0x8E && (h80211[1] & 0x40) != 0x40 )
         {
-			ap_cur->EAP_detected = 1;
+            ap_cur->EAP_detected = 1;
 
             z += 2;     //skip ethertype
 
@@ -1125,9 +1128,9 @@ skip_station:
             /* frame 1: Pairwise == 1, Install == 0, Ack == 1, MIC == 0 */
 
             if( ( h80211[z + 6] & 0x08 ) != 0 &&
-                  ( h80211[z + 6] & 0x40 ) == 0 &&
-                  ( h80211[z + 6] & 0x80 ) != 0 &&
-                  ( h80211[z + 5] & 0x01 ) == 0 )
+                ( h80211[z + 6] & 0x40 ) == 0 &&
+                ( h80211[z + 6] & 0x80 ) != 0 &&
+                ( h80211[z + 5] & 0x01 ) == 0 )
             {
                 memcpy( st_cur->wpa.anonce, &h80211[z + 17], 32 );
                 st_cur->wpa.state = 1;
@@ -1140,9 +1143,9 @@ skip_station:
                 goto write_packet;
 
             if( ( h80211[z + 6] & 0x08 ) != 0 &&
-                  ( h80211[z + 6] & 0x40 ) == 0 &&
-                  ( h80211[z + 6] & 0x80 ) == 0 &&
-                  ( h80211[z + 5] & 0x01 ) != 0 )
+                ( h80211[z + 6] & 0x40 ) == 0 &&
+                ( h80211[z + 6] & 0x80 ) == 0 &&
+                ( h80211[z + 5] & 0x01 ) != 0 )
             {
                 if( memcmp( &h80211[z + 17], ZERO, 32 ) != 0 )
                 {
@@ -1154,7 +1157,7 @@ skip_station:
                 if( (st_cur->wpa.state & 4) != 4 )
                 {
                     st_cur->wpa.eapol_size = ( h80211[z + 2] << 8 )
-                            +   h80211[z + 3] + 4;
+                        +   h80211[z + 3] + 4;
 
                     if (caplen - z < st_cur->wpa.eapol_size || st_cur->wpa.eapol_size == 0 ||
                         caplen - z < 81 + 16 || st_cur->wpa.eapol_size > sizeof(st_cur->wpa.eapol))
@@ -1175,9 +1178,9 @@ skip_station:
             /* frame 3: Pairwise == 1, Install == 1, Ack == 1, MIC == 1 */
 
             if( ( h80211[z + 6] & 0x08 ) != 0 &&
-                  ( h80211[z + 6] & 0x40 ) != 0 &&
-                  ( h80211[z + 6] & 0x80 ) != 0 &&
-                  ( h80211[z + 5] & 0x01 ) != 0 )
+                ( h80211[z + 6] & 0x40 ) != 0 &&
+                ( h80211[z + 6] & 0x80 ) != 0 &&
+                ( h80211[z + 5] & 0x01 ) != 0 )
             {
                 if( memcmp( &h80211[z + 17], ZERO, 32 ) != 0 )
                 {
@@ -1188,7 +1191,7 @@ skip_station:
                 if( (st_cur->wpa.state & 4) != 4 )
                 {
                     st_cur->wpa.eapol_size = ( h80211[z + 2] << 8 )
-                            +   h80211[z + 3] + 4;
+                        +   h80211[z + 3] + 4;
 
                     if (caplen - (unsigned)z < st_cur->wpa.eapol_size || st_cur->wpa.eapol_size == 0 ||
                         caplen - (unsigned)z < 81 + 16 || st_cur->wpa.eapol_size > sizeof(st_cur->wpa.eapol))
@@ -1212,9 +1215,9 @@ skip_station:
                 memcpy( G.wpa_bssid, ap_cur->bssid, 6 );
                 memset(G.message, '\x00', sizeof(G.message));
                 snprintf( G.message, sizeof( G.message ) - 1,
-                    "][ WPA handshake: %02X:%02X:%02X:%02X:%02X:%02X ",
-                    G.wpa_bssid[0], G.wpa_bssid[1], G.wpa_bssid[2],
-                    G.wpa_bssid[3], G.wpa_bssid[4], G.wpa_bssid[5]);
+                          "][ WPA handshake: %02X:%02X:%02X:%02X:%02X:%02X ",
+                          G.wpa_bssid[0], G.wpa_bssid[1], G.wpa_bssid[2],
+                          G.wpa_bssid[3], G.wpa_bssid[4], G.wpa_bssid[5]);
 
 
             }
@@ -1222,7 +1225,7 @@ skip_station:
     }
 
 
-write_packet:
+  write_packet:
 
     if(ap_cur != NULL)
     {
@@ -1322,83 +1325,83 @@ write_packet:
                     }
                 }
 
-                /* not found in either AP list or ST list, look through NA list */
-                na_cur = G.na_1st;
-                na_prv = NULL;
-
-                while( na_cur != NULL )
-                {
-                    if( ! memcmp( na_cur->namac, namac, 6 ) )
-                        break;
-
-                    na_prv = na_cur;
-                    na_cur = na_cur->next;
-                }
-
-                /* update our chained list of unknown stations */
-                /* if it's a new mac, add it */
-
-                if( na_cur == NULL )
-                {
-                    if( ! ( na_cur = (struct NA_info *) malloc(
-                                    sizeof( struct NA_info ) ) ) )
-                    {
-                        perror( "malloc failed" );
-                        return( 1 );
-                    }
-
-                    memset( na_cur, 0, sizeof( struct NA_info ) );
-
-                    if( G.na_1st == NULL )
-                        G.na_1st = na_cur;
-                    else
-                        na_prv->next  = na_cur;
-
-                    memcpy( na_cur->namac, namac, 6 );
-
-                    na_cur->prev = na_prv;
-
-                    gettimeofday(&(na_cur->tv), NULL);
-                    na_cur->tinit = time( NULL );
-                    na_cur->tlast = time( NULL );
-
-                    na_cur->power   = -1;
-                    na_cur->channel = -1;
-                    na_cur->ack     = 0;
-                    na_cur->ack_old = 0;
-                    na_cur->ackps   = 0;
-                    na_cur->cts     = 0;
-                    na_cur->rts_r   = 0;
-                    na_cur->rts_t   = 0;
-                }
-
-                /* update the last time seen & power*/
-
-                na_cur->tlast = time( NULL );
-                na_cur->power = ri->ri_power;
-                na_cur->channel = ri->ri_channel;
-
-                switch(h80211[0] & 0xF0)
-                {
-                    case 0xB0:
-                        if(p == h80211+4)
-                            na_cur->rts_r++;
-                        if(p == h80211+10)
-                            na_cur->rts_t++;
-                        break;
-
-                    case 0xC0:
-                        na_cur->cts++;
-                        break;
-
-                    case 0xD0:
-                        na_cur->ack++;
-                        break;
-
-                    default:
-                        na_cur->other++;
-                        break;
-                }
+//                /* not found in either AP list or ST list, look through NA list */
+//                na_cur = G.na_1st;
+//                na_prv = NULL;
+//
+//                while( na_cur != NULL )
+//                {
+//                    if( ! memcmp( na_cur->namac, namac, 6 ) )
+//                        break;
+//
+//                    na_prv = na_cur;
+//                    na_cur = na_cur->next;
+//                }
+//
+//                /* update our chained list of unknown stations */
+//                /* if it's a new mac, add it */
+//
+//                if( na_cur == NULL )
+//                {
+//                    if( ! ( na_cur = (struct NA_info *) malloc(
+//                                    sizeof( struct NA_info ) ) ) )
+//                    {
+//                        perror( "malloc failed" );
+//                        return( 1 );
+//                    }
+//
+//                    memset( na_cur, 0, sizeof( struct NA_info ) );
+//
+//                    if( G.na_1st == NULL )
+//                        G.na_1st = na_cur;
+//                    else
+//                        na_prv->next  = na_cur;
+//
+//                    memcpy( na_cur->namac, namac, 6 );
+//
+//                    na_cur->prev = na_prv;
+//
+//                    gettimeofday(&(na_cur->tv), NULL);
+//                    na_cur->tinit = time( NULL );
+//                    na_cur->tlast = time( NULL );
+//
+//                    na_cur->power   = -1;
+//                    na_cur->channel = -1;
+//                    na_cur->ack     = 0;
+//                    na_cur->ack_old = 0;
+//                    na_cur->ackps   = 0;
+//                    na_cur->cts     = 0;
+//                    na_cur->rts_r   = 0;
+//                    na_cur->rts_t   = 0;
+//                }
+//
+//                /* update the last time seen & power*/
+//
+//                na_cur->tlast = time( NULL );
+//                na_cur->power = ri->ri_power;
+//                na_cur->channel = ri->ri_channel;
+//
+//                switch(h80211[0] & 0xF0)
+//                {
+//                    case 0xB0:
+//                        if(p == h80211+4)
+//                            na_cur->rts_r++;
+//                        if(p == h80211+10)
+//                            na_cur->rts_t++;
+//                        break;
+//
+//                    case 0xC0:
+//                        na_cur->cts++;
+//                        break;
+//
+//                    case 0xD0:
+//                        na_cur->ack++;
+//                        break;
+//
+//                    default:
+//                        na_cur->other++;
+//                        break;
+//                }
 
                 /*grab next mac (for rts frames)*/
                 p+=6;
@@ -1415,7 +1418,7 @@ void sighandler( int signum)
 
     if( signum == SIGINT || signum == SIGTERM )
     {
-	reset_term();
+        reset_term();
         alarm( 1 );
         G.do_exit = 1;
         signal( SIGALRM, sighandler );
@@ -1425,7 +1428,7 @@ void sighandler( int signum)
     if( signum == SIGSEGV )
     {
         fprintf( stderr, "Caught signal 11 (SIGSEGV). Please"
-                         " contact the author!\33[?25h\n\n" );
+                 " contact the author!\33[?25h\n\n" );
         fflush( stdout );
         exit( 1 );
     }
@@ -1433,7 +1436,7 @@ void sighandler( int signum)
     if( signum == SIGALRM )
     {
         dprintf( STDERR_FILENO, "Caught signal 14 (SIGALRM). Please"
-                         " contact the author!\33[?25h\n\n" );
+                 " contact the author!\33[?25h\n\n" );
         _exit( 1 );
     }
 
@@ -1476,10 +1479,10 @@ int send_probe_request(struct wif *wi)
 
     if (wi_write(wi, p, len, NULL) == -1) {
         switch (errno) {
-        case EAGAIN:
-        case ENOBUFS:
-            usleep(10000);
-            return 0; /* XXX not sure I like this... -sorbo */
+            case EAGAIN:
+            case ENOBUFS:
+                usleep(10000);
+                return 0; /* XXX not sure I like this... -sorbo */
         }
 
         perror("wi_write()");
@@ -1516,14 +1519,14 @@ int getchancount(int valid)
 
 int setup_card(char *iface, struct wif **wis)
 {
-	struct wif *wi;
+    struct wif *wi;
 
-	wi = wi_open(iface);
-	if (!wi)
-		return -1;
-	*wis = wi;
+    wi = wi_open(iface);
+    if (!wi)
+        return -1;
+    *wis = wi;
 
-	return 0;
+    return 0;
 }
 
 int init_cards(const char* cardstr, char *iface[], struct wif **wi)
@@ -1543,7 +1546,7 @@ int init_cards(const char* cardstr, char *iface[], struct wif **wi)
         for(i=0; i<if_count; i++)
         {
             if(strcmp(iface[i], iface[if_count]) == 0)
-            again=1;
+                again=1;
         }
         if(again) continue;
         if(setup_card(iface[if_count], &(wi[if_count])) != 0)
@@ -1651,39 +1654,39 @@ void smartconfig_getApInfo(unsigned char *bssid, char *essid, char *enc, char *a
         }
 
         if(ap_cur->bssid[0] == bssid[0] && ap_cur->bssid[1] == bssid[1] && ap_cur->bssid[2] == bssid[2]
-		&& ap_cur->bssid[3] == bssid[3] && ap_cur->bssid[4] == bssid[4] && ap_cur->bssid[5] == bssid[5])
+           && ap_cur->bssid[3] == bssid[3] && ap_cur->bssid[4] == bssid[4] && ap_cur->bssid[5] == bssid[5])
         {
-        	strcpy(essid, (char*)(ap_cur->essid));
-        	switch(ap_cur->security & 0x000f)
-        	{
-        	case 0x0001:
-        		strcpy(enc,"NONE");
-        		break;
-        	case 0x0002:
-        		strcpy(enc,"WEP");
-        		break;
-        	case 0x0004:
-        		strcpy(enc,"WPA");
-        		break;
-        	case 0x0008:
-        		strcpy(enc, "WPA2");
-        		break;
-        	case 0x000C:
-        		strcpy(enc, "WPA/WPA2");
-        	}
+            strcpy(essid, (char*)(ap_cur->essid));
+            switch(ap_cur->security & 0x000f)
+            {
+                case 0x0001:
+                    strcpy(enc,"NONE");
+                    break;
+                case 0x0002:
+                    strcpy(enc,"WEP");
+                    break;
+                case 0x0004:
+                    strcpy(enc,"WPA");
+                    break;
+                case 0x0008:
+                    strcpy(enc, "WPA2");
+                    break;
+                case 0x000C:
+                    strcpy(enc, "WPA/WPA2");
+            }
 
-        	switch(ap_cur->security & 0x0f00)
-        	{
-        	case 0x0200:
-        		strcpy(auth, "NONE");
-        		break;
-        	case 0x0400:
-        		strcpy(auth, "PSK");
-        		break;
-        	case 0x0800:
-        		strcpy(auth, "MGT");
-        	}
-        	return;
+            switch(ap_cur->security & 0x0f00)
+            {
+                case 0x0200:
+                    strcpy(auth, "NONE");
+                    break;
+                case 0x0400:
+                    strcpy(auth, "PSK");
+                    break;
+                case 0x0800:
+                    strcpy(auth, "MGT");
+            }
+            return;
         }
 
         ap_cur = ap_cur->prev;
@@ -1692,49 +1695,49 @@ void smartconfig_getApInfo(unsigned char *bssid, char *essid, char *enc, char *a
 
 void smartconfig_crc8(unsigned char* crcTable)
 {
-	int i, j;
-	unsigned char remainder;
-	memset(crcTable, 0, sizeof(crcTable));
-	for(i = 0;i < 256;i++)
-	{
-		remainder = (unsigned char)i;
-		for(j = 0;j < 8;j++)
-		{
-			if((remainder&0x01) != 0)
-				remainder = (remainder>>1)^0x8c;
-			else
-				remainder = remainder >> 1;
-		}
-		crcTable[i] = remainder;
-	}
+    int i, j;
+    unsigned char remainder;
+    memset(crcTable, 0, sizeof(crcTable));
+    for(i = 0;i < 256;i++)
+    {
+        remainder = (unsigned char)i;
+        for(j = 0;j < 8;j++)
+        {
+            if((remainder&0x01) != 0)
+                remainder = (remainder>>1)^0x8c;
+            else
+                remainder = remainder >> 1;
+        }
+        crcTable[i] = remainder;
+    }
 }
 
 void smartconfig_decoder(int caplen, unsigned char* result)
 {
-	int data;
-	int out;
-	unsigned char crc_value, data_value;
-	data = caplen - 40;   //define in esptouch
-	out = data>>8;
-	if(out == 0)
-	{
-		crc_value  = (data&0x00f0)>>4;
-		data_value = (data&0x000f);
-		result[0] = out;
-		result[1] = crc_value;
-		result[2] = data_value;
-	}
-	else
-	{
-		data_value = data&0x00ff;    //data index
-		result[0] = out;
-		result[1] = data_value;
-	}
+    int data;
+    int out;
+    unsigned char crc_value, data_value;
+    data = caplen - 40;   //define in esptouch
+    out = data>>8;
+    if(out == 0)
+    {
+        crc_value  = (data&0x00f0)>>4;
+        data_value = (data&0x000f);
+        result[0] = out;
+        result[1] = crc_value;
+        result[2] = data_value;
+    }
+    else
+    {
+        data_value = data&0x00ff;    //data index
+        result[0] = out;
+        result[1] = data_value;
+    }
 }
 
 int smartconfig_filter_packet( unsigned char *h80211, int caplen, unsigned char* ap_bssid, unsigned char* dst_mac_05, int *type)
 {
-	int i;
+    int i;
     unsigned char bssid[6];
     unsigned char dst_mac[6] = {0,0,0,0,0,0};
     type = 1;
@@ -1760,49 +1763,53 @@ int smartconfig_filter_packet( unsigned char *h80211, int caplen, unsigned char*
     /* locate the access point's MAC address */
     switch( h80211[1] & 3 )
     {
-        case  0:
-        	memcpy( bssid, h80211 + 16, 6 );
-        	break;  //Adhoc
+        //case  0:
+        //	memcpy( bssid, h80211 + 16, 6 );
+        //	break;  //Adhoc
         case  1:
-        	memcpy( bssid, h80211 +  4, 6 );
+            memcpy( bssid, h80211 +  4, 6 );
             memcpy( dst_mac, h80211 +  16, 6 );  //DS
-        	break;  //ToDS
+            break;  //ToDS
         case  2:
-        	memcpy( bssid, h80211 + 10, 6 );
+            memcpy( bssid, h80211 + 10, 6 );
             memcpy( dst_mac, h80211 +  4, 6 );  //DS
-        	break;  //FromDS
-        case  3:
-        	memcpy( bssid, h80211 + 10, 6 );
-        	break;  //WDS -> Transmitter taken as BSSID
+            break;  //FromDS
+            //case  3:
+            //	memcpy( bssid, h80211 + 10, 6 );
+            //	break;  //WDS -> Transmitter taken as BSSID
     }
 
 #if 1
     if ((h80211[1] & 3) == 2 || (h80211[1] & 3) == 1)
-    //if ((h80211[1] & 3) == 1)
-	{
-    	if((dst_mac[3] == dst_mac[4] && dst_mac[4] == dst_mac[5]) || (bssid[3] == bssid[4] && bssid[4] == bssid[5]))
-    	{
-    		if(dst_mac[0] != 0xff && dst_mac[1] !=0xff && dst_mac[2] != 0xff && dst_mac[3] != 0xff && dst_mac[4] != 0xff && dst_mac[5]!=0xff )
-    		{
+        if ((h80211[1] & 3) == 1)
+        {
+            if((dst_mac[3] == dst_mac[4] && dst_mac[4] == dst_mac[5]) || (bssid[3] == bssid[4] && bssid[4] == bssid[5]))
+            {
+                if(dst_mac[0] != 0xff && dst_mac[1] !=0xff && dst_mac[2] != 0xff && dst_mac[3] != 0xff && dst_mac[4] != 0xff && dst_mac[5]!=0xff )
+                {
 #endif
-				printf("The dst mac address is %02X:%02X:%02X:%02X:%02X:%02X ", dst_mac[0], dst_mac[1],dst_mac[2],dst_mac[3],dst_mac[4],dst_mac[5]);
-				printf("The non bssid is %02X:%02X:%02X:%02X:%02X:%02X \n", bssid[0], bssid[1],bssid[2],bssid[3],bssid[4],bssid[5]);
-				printf("The caplen: %d", caplen);
-				if((h80211[1] & 3) == 2)
-					printf("Type: %d\n", 2);
-				else if((h80211[1] & 3) == 1)
-					printf("Type: %d\n", 1);
-				type = (int)(h80211[1] & 3);
-				dst_mac_05 = dst_mac[5];
-				memcpy( ap_bssid, bssid, 6 );  //FromDS
-				return(1);
-#if 1
-			}
-    	}
-#endif
-	}
+                    if(en_printinfo > 0)
+                    {
+                        printf("The dst mac address is %02X:%02X:%02X:%02X:%02X:%02X ", dst_mac[0], dst_mac[1],dst_mac[2],dst_mac[3],dst_mac[4],dst_mac[5]);
+                        printf("The source bssid is %02X:%02X:%02X:%02X:%02X:%02X \n", bssid[0], bssid[1],bssid[2],bssid[3],bssid[4],bssid[5]);
+                        printf("The caplen: %d", caplen);
+                        if((h80211[1] & 3) == 2)
+                            printf("Type: %d\n", 2);
+                        else if((h80211[1] & 3) == 1)
+                            printf("Type: %d\n", 1);
+                    }
 
-	return(-1);
+                    type = (int)(h80211[1] & 3);
+                    dst_mac_05 = dst_mac[5];
+                    memcpy( ap_bssid, bssid, 6 );  //FromDS
+                    return(1);
+#if 1
+                }
+            }
+#endif
+        }
+
+    return(-1);
 }
 
 void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int cards)
@@ -1811,10 +1818,11 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
     int caplen=0, fd_is_set, chan_count;
     int wi_read_failed=0;
     int chan, i, k;
+    int count =0;
     fd_set  rfds;
     char ifnam[64];
     struct rx_info ri;
-    unsigned char      buffer[4096];
+    unsigned char      buffer[2048];
     unsigned char      *h80211;
     int *smartconfig_packet_num; //the num of packet that satisfy the format of smartconfig packet, i.e, the last three destination mac values are the same
     unsigned char fixchannel = 0;
@@ -1852,21 +1860,22 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
 
     //use channels
     chan_count = getchancount(1);
-	smartconfig_packet_num = (int *) malloc(sizeof(int) * chan_count);
-	memset(smartconfig_packet_num, 0, sizeof(smartconfig_packet_num));
-	memset(data_seq, 0, sizeof(data_seq));
-	memset(data_seq_status, 0, sizeof(data_seq_status));
+    smartconfig_packet_num = (int *) malloc(sizeof(int) * chan_count);
+    memset(smartconfig_packet_num, 0, sizeof(smartconfig_packet_num));
+    memset(data_seq, 0, sizeof(data_seq));
+    memset(data_seq_status, 0, sizeof(data_seq_status));
     printf("existing channel number: %d, card num: %d \n", chan_count, cards);
 
     while(1)
     {
-    	for(chan = 0; chan < chan_count; chan++)
-    	{
-	    	printf("CH: %d \n", G.channels[chan]);
-	    	G.channel[0] = G.channels[chan];
-	    	ApChannel = G.channels[chan]; //current channel
+        for(chan = 0; chan < chan_count; chan++)
+        {
+            if(en_printinfo > 0 )
+                printf("CH: %d \n", G.channels[chan]);
+            G.channel[0] = G.channels[chan];
+            ApChannel = G.channels[chan]; //current channel
 
-	    	//only one card
+            //only one card
             wi_set_channel(wi[0], G.channel[0]);
 
             G.singlechan = 1;
@@ -1874,383 +1883,392 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
             smartconfig_packet_num[chan] = 0;
 
             //usleep(100);
-    	    while( 1 )
-     	    {
-               if( G.do_exit )
-               {
-            	   break;
-               }  
+            while( 1 )
+            {
+                if( G.do_exit )
+                {
+                    break;
+                }  
 
-       	       gettimeofday( &tv0, NULL );
+                gettimeofday( &tv0, NULL );
 
-               cycle_time = 1000000 * ( tv0.tv_sec  - tv1.tv_sec  )
-                             + ( tv0.tv_usec - tv1.tv_usec );
+                cycle_time = 1000000 * ( tv0.tv_sec  - tv1.tv_sec  )
+                    + ( tv0.tv_usec - tv1.tv_usec );
 
-               //scan timeout
-               if( cycle_time > 500000 )
-               {
-            	  check_monitor(wi, fd_raw, fdh, cards);
-            	  check_channel(wi, cards);
-            	  check_frequency(wi, cards);
-                  gettimeofday( &tv1, NULL );
-		  	      break;
-               }
+                //scan timeout
+                if( cycle_time > 200000 )
+                {
+                    check_monitor(wi, fd_raw, fdh, cards);
+                    check_channel(wi, cards);
+                    check_frequency(wi, cards);
+                    gettimeofday( &tv1, NULL );
+                    break;
+                }
 
-            	/* capture one packet */
-	    
-            	FD_ZERO( &rfds );
+                /* capture one packet */
+            
+                FD_ZERO( &rfds );
 
-            	for(i=0; i<cards; i++)
-            		FD_SET( fd_raw[i], &rfds );
+                for(i=0; i<cards; i++)
+                    FD_SET( fd_raw[i], &rfds );
 
-		        tv0.tv_sec  = G.update_s;
-		        tv0.tv_usec = (G.update_s == 0) ? REFRESH_RATE : 0;
+                tv0.tv_sec  = G.update_s;
+                tv0.tv_usec = (G.update_s == 0) ? REFRESH_RATE : 0;
 
 
-		        if( select( (*fdh) + 1, &rfds, NULL, NULL, &tv0 ) < 0 )
-		        {
-		            if( errno == EINTR )
-		            {
-		                continue;
-		            }
-		            perror( "select failed" );
+                if( select( (*fdh) + 1, &rfds, NULL, NULL, &tv0 ) < 0 )
+                {
+                    if( errno == EINTR )
+                    {
+                        continue;
+                    }
+                    perror( "select failed" );
 
-		            return;
-		        }
-		        else
-		        	usleep(1);
+                    return;
+                }
+                else
+                    usleep(1);
 
-		        fd_is_set = 0;
-            	for( i =0; i<cards; i++) 
-	    		{
-		        	if( FD_ISSET( fd_raw[i], &rfds ) )
-		        	{
-		                memset(buffer, 0, sizeof(buffer));
-		                h80211 = buffer;
-		                if ((caplen = wi_read(wi[i], h80211, sizeof(buffer), &ri)) == -1) {
-		                	wi_read_failed++;
-		                	if(wi_read_failed > 1)
-		                	{
-		                         G.do_exit = 1;
-		                         break;
-		                    }
-		                    memset(G.message, '\x00', sizeof(G.message));
-		                    snprintf(G.message, sizeof(G.message), "][ interface %s down ", wi_get_ifname(wi[i]));
+                fd_is_set = 0;
+                for( i =0; i<cards; i++) 
+                {
+                    if( FD_ISSET( fd_raw[i], &rfds ) )
+                    {
+                        memset(buffer, 0, sizeof(buffer));
+                        h80211 = buffer;
+                        if ((caplen = wi_read(wi[i], h80211, sizeof(buffer), &ri)) == -1) {
+                            wi_read_failed++;
+                            if(wi_read_failed > 1)
+                            {
+                                G.do_exit = 1;
+                                break;
+                            }
+                            memset(G.message, '\x00', sizeof(G.message));
+                            snprintf(G.message, sizeof(G.message), "][ interface %s down ", wi_get_ifname(wi[i]));
 
-		                    //reopen in monitor mode
+                            //reopen in monitor mode
 
-		                    strncpy(ifnam[i], wi_get_ifname(wi[i]), sizeof(ifnam)-1);
-		                    ifnam[sizeof(ifnam)-1] = 0;
+                            strncpy(ifnam[i], wi_get_ifname(wi[i]), sizeof(ifnam)-1);
+                            ifnam[sizeof(ifnam)-1] = 0;
 
-		                    wi_close(wi[i]);
-		                    wi[i] = wi_open(ifnam);
-		                    if (!wi[i]) {
-		                        printf("Can't reopen %s\n", ifnam);
+                            wi_close(wi[i]);
+                            wi[i] = wi_open(ifnam);
+                            if (!wi[i]) {
+                                printf("Can't reopen %s\n", ifnam);
 
-		                        /* Restore terminal */
-		                        fprintf( stderr, "\33[?25h" );
-		                        fflush( stdout );
+                                /* Restore terminal */
+                                fprintf( stderr, "\33[?25h" );
+                                fflush( stdout );
 
-		                        exit(1);
-		                    }
+                                exit(1);
+                            }
 
-		                    fd_raw[i] = wi_fd(wi[i]);
-		                 	if (fd_raw[i] > *fdh)
-		                        *fdh = fd_raw[i];
+                            fd_raw[i] = wi_fd(wi[i]);
+                            if (fd_raw[i] > *fdh)
+                                *fdh = fd_raw[i];
 
-		                    break;
-	//                         return 1;
-		                }
-		                read_pkts++;
-		                dump_add_packet( h80211, caplen, &ri, 0 );
-		                wi_read_failed = 0;
-						if(smartconfig_filter_packet(h80211, caplen, bssid, &dst_mac_05, &packet_type) == 1)
-						{
-							smartconfig_packet_num[chan]++;
-							if(smartconfig_packet_num[chan] > 6)
-							{
-								fixchannel = G.channels[chan];
-								packet_type_cur = packet_type;
-								break;
-							}
-		                }
+                            break;
+                            //                         return 1;
+                        }
+                        read_pkts++;
+                        dump_add_packet( h80211, caplen, &ri, 0 );
 
-					}
-            	}
-				if(fixchannel != 0)
-					break;
-        	}
-			if(fixchannel != 0)
-				break;
-    	}
-		if(fixchannel != 0)
-			break;
+                        wi_read_failed = 0;
+                        if(smartconfig_filter_packet(h80211, caplen, bssid, &dst_mac_05, &packet_type) == 1)
+                        {
+                            smartconfig_packet_num[chan]++;
+                            if(smartconfig_packet_num[chan] > 6)
+                            {
+                                fixchannel = G.channels[chan];
+                                packet_type_cur = packet_type;
+                                break;
+                            }
+                        }
+
+                    }
+                }
+                if(fixchannel != 0)
+                    break;
+            }
+            if(fixchannel != 0)
+                break;
+        }
+        if(fixchannel != 0)
+            break;
     }
-   // printf("Ap num: %d", get_ap_list_count());
-   // print_ap_list();
-   mac_array_index = 0;
-   while(1){
-       //Fix the channel
-	   //printf("Fixchannel: %d", fixchannel);
-       wi_set_channel(wi[0], fixchannel);
-       G.singlechan = 1;
-       ApChannel = fixchannel;
+    // printf("Ap num: %d", get_ap_list_count());
+    // print_ap_list();
+    mac_array_index = 0;
+    ApChannel = fixchannel;
+    while(1){
+        //Fix the channel
+        //printf("Fixchannel: %d", fixchannel);
+        //wi_set_channel(wi[0], fixchannel);
+        //G.singlechan = 1;
+        //ApChannel = fixchannel;
 
-       /* capture one packet */
-       FD_ZERO( &rfds );
+        /* capture one packet */
+        FD_ZERO( &rfds );
  
-       for(i=0; i<cards; i++)
+        for(i=0; i<cards; i++)
             FD_SET( fd_raw[i], &rfds );
 
-       tv0.tv_sec  = G.update_s;
-       tv0.tv_usec = (G.update_s == 0) ? REFRESH_RATE : 0;
+        tv0.tv_sec  = G.update_s;
+        tv0.tv_usec = (G.update_s == 0) ? REFRESH_RATE : 0;
 
-       if( select( *fdh + 1, &rfds, NULL, NULL, &tv0 ) < 0 ){
-          if( errno == EINTR ){
-              continue;
-          }
-          perror( "select failed" );
-          return;
-       }
-       else
-          usleep(1);
+        if( select( *fdh + 1, &rfds, NULL, NULL, &tv0 ) < 0 ){
+            if( errno == EINTR ){
+                continue;
+            }
+            perror( "select failed" );
+            return;
+        }
+        else
+            usleep(1);
 
-		        
-       fd_is_set = 0;
-       for( i =0; i<cards; i++)	{
-    	   if( FD_ISSET( fd_raw[i], &rfds ) ) {
-    		   memset(buffer, 0, sizeof(buffer));
-    		   h80211 = buffer;
-    		   if ((caplen = wi_read(wi[i], h80211, sizeof(buffer), &ri)) == -1) {
-    			   wi_read_failed++;
-    			   if(wi_read_failed > 1){
-    				   G.do_exit = 1;
-    				   break;
-    			   }
-    			   memset(G.message, '\x00', sizeof(G.message));
-    			   snprintf(G.message, sizeof(G.message), "][ interface %s down ", wi_get_ifname(wi[i]));
+                        
+        fd_is_set = 0;
+        for( i =0; i<cards; i++)	{
+            if( FD_ISSET( fd_raw[i], &rfds ) ) {
+                memset(buffer, 0, sizeof(buffer));
+                h80211 = buffer;
+                if ((caplen = wi_read(wi[i], h80211, sizeof(buffer), &ri)) == -1) {
+                    wi_read_failed++;
+                    if(wi_read_failed > 1){
+                        G.do_exit = 1;
+                        break;
+                    }
+                    memset(G.message, '\x00', sizeof(G.message));
+                    snprintf(G.message, sizeof(G.message), "][ interface %s down ", wi_get_ifname(wi[i]));
 
-    			   //reopen in monitor mode
+                    //reopen in monitor mode
 
-    			   strncpy(ifnam[i], wi_get_ifname(wi[i]), sizeof(ifnam)-1);
-    			   ifnam[sizeof(ifnam)-1] = 0;
+                    strncpy(ifnam[i], wi_get_ifname(wi[i]), sizeof(ifnam)-1);
+                    ifnam[sizeof(ifnam)-1] = 0;
 
-    			   wi_close(wi[i]);
-    			   wi[i] = wi_open(ifnam);
-    			   if (!wi[i]) {
-    				   printf("Can't reopen %s\n", ifnam);
+                    wi_close(wi[i]);
+                    wi[i] = wi_open(ifnam);
+                    if (!wi[i]) {
+                        printf("Can't reopen %s\n", ifnam);
 
-    				   /* Restore terminal */
-    				   fprintf( stderr, "\33[?25h" );
-    				   fflush( stdout );
+                        /* Restore terminal */
+                        fprintf( stderr, "\33[?25h" );
+                        fflush( stdout );
 
-    				   exit(1);
-    			   }
+                        exit(1);
+                    }
 
-    			   fd_raw[i] = wi_fd(wi[i]);
-    			   if (fd_raw[i] > *fdh)
-    				   *fdh = fd_raw[i];
+                    fd_raw[i] = wi_fd(wi[i]);
+                    if (fd_raw[i] > *fdh)
+                        *fdh = fd_raw[i];
 
-    			   break;
-			//                         return 1;
-    		   }
-    		    dump_add_packet( h80211, caplen, &ri, 0 );
-    		   if(smartconfig_filter_packet(h80211, caplen, bssid, &dst_mac_05, &packet_type) == 1)
-    		   {
-    			   if(packet_type_cur != packet_type)
-    				   continue;
-    			   if(is_guidecode_received == 1 && enc_constant >= 0)
-    			   {
+                    break;
+                    //                         return 1;
+                }
+                   
+                dump_add_packet( h80211, caplen, &ri, 0 );
+                if(smartconfig_filter_packet(h80211, caplen, bssid, &dst_mac_05, &packet_type) == 1)
+                {
+                    //continue;
+                    if(packet_type_cur != packet_type)
+                        continue;
+                    if(is_guidecode_received == 1 && enc_constant >= 0)
+                    {
 
-    				   if(ApBSsid[0] == bssid[0] && ApBSsid[1] == bssid[1] && ApBSsid[2] == bssid[2]
-			           && ApBSsid[3] == bssid[3] && ApBSsid[4] == bssid[4] && ApBSsid[5] == bssid[5])
-    				   {
-    					   unsigned char de_value[3];
-    					   caplen -= enc_constant;
-    					   //printf("The bssid is %02X:%02X:%02X:%02X:%02X:%02X \n", ApBSsid[0], ApBSsid[1],ApBSsid[2],ApBSsid[3],ApBSsid[4],ApBSsid[5]);
+                        if(ApBSsid[0] == bssid[0] && ApBSsid[1] == bssid[1] && ApBSsid[2] == bssid[2]
+                           && ApBSsid[3] == bssid[3] && ApBSsid[4] == bssid[4] && ApBSsid[5] == bssid[5])
+                        {
+                            unsigned char de_value[3];
+                            caplen -= enc_constant;
+                            if(en_printinfo > 0)
+                                printf("The bssid is %02X:%02X:%02X:%02X:%02X:%02X \n", ApBSsid[0], ApBSsid[1],ApBSsid[2],ApBSsid[3],ApBSsid[4],ApBSsid[5]);
 
-    					   if(mac_05_cur != dst_mac_05)
-    					   {
-       						   smartconfig_decoder(caplen, de_value);
-    						   data_byte[0][0] = de_value[0];
-    						   data_byte[0][1] = de_value[1];
-    						   data_byte[0][2] = de_value[2];
-    						   data_byte_index = 0;
-    						   data_byte_index++;
-    					   }
-    					   else
-    					   {
-    						   smartconfig_decoder(caplen, de_value);
-    						   data_byte[data_byte_index][0] = de_value[0];
-    						   data_byte[data_byte_index][1] = de_value[1];
-    						   data_byte[data_byte_index][2] = de_value[2];
-    						   data_byte_index++;
-    						   if(data_byte_index == 3)
-    						   {
-    							   if(data_byte[0][0] == 0 && data_byte[1][0] == 1 && data_byte[2][0] == 0)
-    							   {
-    								   int u;
-    								   unsigned char crc_value,crc_value_cal;
-    								   unsigned char data_value;
-    								   unsigned char value_tmp = 0x00, data_tmp;
+                            if(mac_05_cur != dst_mac_05)
+                            {
+                                smartconfig_decoder(caplen, de_value);
+                                data_byte[0][0] = de_value[0];
+                                data_byte[0][1] = de_value[1];
+                                data_byte[0][2] = de_value[2];
+                                data_byte_index = 0;
+                                data_byte_index++;
+                            }
+                            else
+                            {
+                                smartconfig_decoder(caplen, de_value);
+                                data_byte[data_byte_index][0] = de_value[0];
+                                data_byte[data_byte_index][1] = de_value[1];
+                                data_byte[data_byte_index][2] = de_value[2];
+                                data_byte_index++;
+                                if(data_byte_index == 3)
+                                {
+                                    if(data_byte[0][0] == 0 && data_byte[1][0] == 1 && data_byte[2][0] == 0)
+                                    {
+                                        int u;
+                                        unsigned char crc_value,crc_value_cal;
+                                        unsigned char data_value;
+                                        unsigned char value_tmp = 0x00, data_tmp;
 
-    								   crc_value  = (unsigned char)(data_byte[0][1]<<4) + data_byte[2][1];
-    								   data_value = (unsigned char)(data_byte[0][2]<<4) + data_byte[2][2];
+                                        crc_value  = (unsigned char)(data_byte[0][1]<<4) + data_byte[2][1];
+                                        data_value = (unsigned char)(data_byte[0][2]<<4) + data_byte[2][2];
 
-    								   data_tmp  = data_value^value_tmp;
-    								   value_tmp = (crcTable[data_tmp&0xff]^(value_tmp<<8))&0xff;
-    								   data_tmp  = data_byte[1][1]^value_tmp;
-    								   value_tmp = (crcTable[data_tmp&0xff]^(value_tmp<<8))&0xff;
+                                        data_tmp  = data_value^value_tmp;
+                                        value_tmp = (crcTable[data_tmp&0xff]^(value_tmp<<8))&0xff;
+                                        data_tmp  = data_byte[1][1]^value_tmp;
+                                        value_tmp = (crcTable[data_tmp&0xff]^(value_tmp<<8))&0xff;
 
-    								   crc_value_cal = value_tmp;
+                                        crc_value_cal = value_tmp;
 
-    								   if(crc_value_cal == crc_value)
-    								   {
-    									   printf("crc_value :%x, data_value: %x, crc_value_cal： %x\n", crc_value, data_value, crc_value_cal);
-    									   printf("The data_byte: ");
-    									   for(u=0;u<3;u++)
-    										   printf("[%u, %u, %u] ",data_byte[u][0],data_byte[u][1],data_byte[u][2]);
-    									   printf("\n");
+                                        if(crc_value_cal == crc_value)
+                                        {
+                                            if(en_printinfo > 0)
+                                            {
+                                                printf("crc_value :%x, data_value: %x, crc_value_cal： %x\n", crc_value, data_value, crc_value_cal);
+                                                printf("The data_byte: ");
+                                                for(u=0;u<3;u++)
+                                                    printf("[%u, %u, %u] ",data_byte[u][0],data_byte[u][1],data_byte[u][2]);
+                                                printf("\n");
 
-   										   data_seq[data_byte[1][1]] = data_value;
-   										   data_seq_status[data_byte[1][1]] = 1;  //data filled
-    								   }
-    								   data_byte_index = 0;
-    							   }
-    							   else
-    							   {
-    								   data_byte[0][0] = data_byte[1][0];
-    								   data_byte[0][1] = data_byte[1][1];
-    								   data_byte[0][2] = data_byte[1][2];
-    								   data_byte[1][0] = data_byte[2][0];
-    								   data_byte[1][1] = data_byte[2][1];
-    								   data_byte[1][2] = data_byte[2][2];
-    								   data_byte_index = 2;
-    							   }
-    						   }
-    					   }
+                                            }
 
-    					   mac_05_cur = dst_mac_05;
+                                            data_seq[data_byte[1][1]] = data_value;
+                                            data_seq_status[data_byte[1][1]] = 1;  //data filled
+                                        }
+                                        data_byte_index = 0;
+                                    }
+                                    else
+                                    {
+                                        data_byte[0][0] = data_byte[1][0];
+                                        data_byte[0][1] = data_byte[1][1];
+                                        data_byte[0][2] = data_byte[1][2];
+                                        data_byte[1][0] = data_byte[2][0];
+                                        data_byte[1][1] = data_byte[2][1];
+                                        data_byte[1][2] = data_byte[2][2];
+                                        data_byte_index = 2;
+                                    }
+                                }
+                            }
 
-    					   //check whether head exist
-    					   for(k=0;k<9;k++)
-    					   {
-    						   if(data_seq_status[k]==0)
-    							   break;
-    						   if(k==8)
-    							   is_find_data_header = 1;
-    					   }
-    					   if(is_find_data_header == 1 )
-    					   {
-    						   if(data_seq[1]>0)
-    						   {
-    							   for(k=0;k<data_seq[1];k++)
-    							   {
-    								   if(data_seq_status[k+9] == 0)
-    									   break;
-    								   ApPasswd[k] = data_seq[k+9];
-    								   if(k == (data_seq[1]-1))
-    								   {
-    										is_find_passwd = 1;
-    										ApPasswd[k+1] = '\0';
-    								   }
-    							   }
-    						   }
-    						   else if(data_seq[1] == 0)
-    						   {
-    							   *ApPasswd = '\0';
-    							   is_find_passwd = 1;
-    						   }
+                            mac_05_cur = dst_mac_05;
 
-    						   if(is_find_passwd == 1)
-    							   printf("Found passwd: %s\n", ApPasswd);
-    						   else
-    							   continue;
+                            //check whether head exist
+                            for(k=0;k<9;k++)
+                            {
+                                if(data_seq_status[k]==0)
+                                    break;
+                                if(k==8)
+                                    is_find_data_header = 1;
+                            }
+                            if(is_find_data_header == 1 )
+                            {
+                                if(data_seq[1]>0)
+                                {
+                                    for(k=0;k<data_seq[1];k++)
+                                    {
+                                        if(data_seq_status[k+9] == 0)
+                                            break;
+                                        ApPasswd[k] = data_seq[k+9];
+                                        if(k == (data_seq[1]-1))
+                                        {
+                                            is_find_passwd = 1;
+                                            ApPasswd[k+1] = '\0';
+                                        }
+                                    }
+                                }
+                                else if(data_seq[1] == 0)
+                                {
+                                    *ApPasswd = '\0';
+                                    is_find_passwd = 1;
+                                }
 
-    						   srcIP[0] = data_seq[5];
-    						   srcIP[1] = data_seq[6];
-    						   srcIP[2] = data_seq[7];
-    						   srcIP[3] = data_seq[8];
+                                if(is_find_passwd == 1)
+                                    printf("Found passwd: %s\n", ApPasswd);
+                                else
+                                    continue;
 
-    						   if(ApESsid == "")
-    						   {
-    							   printf("SSID Error, retry\n");
+                                srcIP[0] = data_seq[5];
+                                srcIP[1] = data_seq[6];
+                                srcIP[2] = data_seq[7];
+                                srcIP[3] = data_seq[8];
 
-    						   }
-    						   else
-    						   {
-        						   smartconfig_getApInfo(ApBSsid, ApESsid, ApEnc, ApAuth);
-        						   if(strcmp(ApEnc, "WPA/WPA2") == 0 && strcmp(ApAuth, "PSK") ==0)
-        							   strcpy(ApAuth, "psk2-mixed");
-        						   if(strcmp(ApEnc, "WPA2") == 0 && strcmp(ApAuth, "PSK") == 0)
-        							   strcpy(ApAuth, "psk2");
+                                if(ApESsid == "")
+                                {
+                                    printf("SSID Error, retry\n");
 
-        						   printf("SmartconfigResult:");
-        						   printf("SourceIP:%u.%u.%u.%u ", srcIP[0], srcIP[1], srcIP[2], srcIP[3]);
-        						   printf("ESsid:%s ApEnc:%s ApAuth:%s ApPasswd:%s Channel:%d ", ApESsid, ApEnc, ApAuth, ApPasswd, ApChannel);
-        						   printf("BSsid:%02X:%02X:%02X:%02X:%02X:%02X\n", ApBSsid[0], ApBSsid[1],ApBSsid[2],ApBSsid[3],ApBSsid[4],ApBSsid[5]);
+                                }
+                                else
+                                {
+                                    smartconfig_getApInfo(ApBSsid, ApESsid, ApEnc, ApAuth);
+                                    if(strcmp(ApEnc, "WPA/WPA2") == 0 && strcmp(ApAuth, "PSK") ==0)
+                                        strcpy(ApAuth, "psk2-mixed");
+                                    if(strcmp(ApEnc, "WPA2") == 0 && strcmp(ApAuth, "PSK") == 0)
+                                        strcpy(ApAuth, "psk2");
 
-    							   goto packet_received;
-    						   }
-    					   }
+                                    printf("SmartconfigResult:");
+                                    printf("SourceIP:%u.%u.%u.%u ", srcIP[0], srcIP[1], srcIP[2], srcIP[3]);
+                                    printf("ESsid:%s ApEnc:%s ApAuth:%s ApPasswd:%s Channel:%d ", ApESsid, ApEnc, ApAuth, ApPasswd, ApChannel);
+                                    printf("BSsid:%02X:%02X:%02X:%02X:%02X:%02X\n", ApBSsid[0], ApBSsid[1],ApBSsid[2],ApBSsid[3],ApBSsid[4],ApBSsid[5]);
 
-    					   //printf("enc_constant: %d, length: %d\n", enc_constant, caplen);
-    				   }
-    			   }
-    			   else
-    			   {
-    				   if(mac_array_index == 0){
-    					   dst_mac_05_array[mac_array_index] = dst_mac_05;
-    					   cap_length_array[mac_array_index] = caplen;
-						   mac_array_index++;
-					   }
-					   else if(dst_mac_05_array[mac_array_index-1]!=dst_mac_05)
-					   {
-						   mac_array_index = 0;
-						   dst_mac_05_array[mac_array_index] = dst_mac_05;
-						   cap_length_array[mac_array_index] = caplen;
-						   mac_array_index++;
-					   }
-					   else if(mac_array_index < 4)
-					   {
-						   if((cap_length_array[mac_array_index - 1] - caplen) != 1)
-						   {
-							   mac_array_index = 0;
-							   dst_mac_05_array[mac_array_index] = dst_mac_05;
-							   cap_length_array[mac_array_index] = caplen;
-							   mac_array_index++;
-						   }
-						   else
-						   {
-							   dst_mac_05_array[mac_array_index] = dst_mac_05;
-							   cap_length_array[mac_array_index] = caplen;
-							   mac_array_index++;
-						   }
+                                    goto packet_received;
+                                }
+                            }
 
-						   if(mac_array_index == 4)
-						   {
-							   enc_constant = cap_length_array[0] - 515;
-							   mac_05_cur = dst_mac_05;
-							   is_guidecode_received = 1;
-							   memcpy(ApBSsid, bssid, 6);
-							   printf("Received the Guide Code: %d, %d, %d, %d \n", cap_length_array[0],cap_length_array[1],cap_length_array[2],cap_length_array[3]);
-						   }
-					   }
-					   else
-					   {
+                            //printf("enc_constant: %d, length: %d\n", enc_constant, caplen);
+                        }
+                    }
+                    else
+                    {
+                        if(mac_array_index == 0){
+                            dst_mac_05_array[mac_array_index] = dst_mac_05;
+                            cap_length_array[mac_array_index] = caplen;
+                            mac_array_index++;
+                        }
+                        else if(dst_mac_05_array[mac_array_index-1]!=dst_mac_05)
+                        {
+                            mac_array_index = 0;
+                            dst_mac_05_array[mac_array_index] = dst_mac_05;
+                            cap_length_array[mac_array_index] = caplen;
+                            mac_array_index++;
+                        }
+                        else if(mac_array_index < 4)
+                        {
+                            if((cap_length_array[mac_array_index - 1] - caplen) != 1)
+                            {
+                                mac_array_index = 0;
+                                dst_mac_05_array[mac_array_index] = dst_mac_05;
+                                cap_length_array[mac_array_index] = caplen;
+                                mac_array_index++;
+                            }
+                            else
+                            {
+                                dst_mac_05_array[mac_array_index] = dst_mac_05;
+                                cap_length_array[mac_array_index] = caplen;
+                                mac_array_index++;
+                            }
 
-					   }
-    			   }
-    		   }
-    		   //dump_add_packet( h80211, caplen, &ri, 0 );
+                            if(mac_array_index == 4)
+                            {
+                                enc_constant = cap_length_array[0] - 515;
+                                mac_05_cur = dst_mac_05;
+                                is_guidecode_received = 1;
+                                memcpy(ApBSsid, bssid, 6);
+                                //printf("Received the Guide Code: %d, %d, %d, %d \n", cap_length_array[0],cap_length_array[1],cap_length_array[2],cap_length_array[3]);
+                            }
+                        }
+                        else
+                        {
 
-    	   }
-       }
-   }
+                        }
+                    }
+                }
+                //dump_add_packet( h80211, caplen, &ri, 0 );
 
-packet_received:
+            }
+        }
+    }
 
-   free(smartconfig_packet_num);
+  packet_received:
+
+    free(smartconfig_packet_num);
 }
 int main( int argc, char *argv[] )
 {
@@ -2326,7 +2344,7 @@ int main( int argc, char *argv[] )
     G.detect_anomaly = 0;
     G.airodump_start_time = NULL;
 
-	// Default selection.
+    // Default selection.
     resetSelection();
 
     memset(G.sharedkey, '\x00', 512*3);
@@ -2355,7 +2373,7 @@ int main( int argc, char *argv[] )
     for (i = 0; i < G.num_cards; i++) {
     	fd_raw[i] = wi_fd(wi[i]);
     	if (fd_raw[i] > fdh)
-    		fdh = fd_raw[i];
+            fdh = fd_raw[i];
     }
 
     //use channels
@@ -2404,16 +2422,16 @@ int main( int argc, char *argv[] )
 
     while( ap_cur != NULL )
     {
-		// Clean content of ap_cur list (first element: G.ap_1st)
+        // Clean content of ap_cur list (first element: G.ap_1st)
         uniqueiv_wipe( ap_cur->uiv_root );
 
         list_tail_free(&(ap_cur->packets));
 
         if (G.manufList)
-        	free(ap_cur->manuf);
+            free(ap_cur->manuf);
 
         if (G.detect_anomaly)
-        	data_wipe(ap_cur->data_root);
+            data_wipe(ap_cur->data_root);
 
         ap_prv = ap_cur;
         ap_cur = ap_cur->next;
@@ -2423,7 +2441,7 @@ int main( int argc, char *argv[] )
 
     while( ap_cur != NULL )
     {
-		// Freeing AP List
+        // Freeing AP List
         ap_next = ap_cur->next;
 
         if( ap_cur != NULL )
@@ -2439,7 +2457,7 @@ int main( int argc, char *argv[] )
     {
         st_next = st_cur->next;
         if (G.manufList)
-        	free(st_cur->manuf);
+            free(st_cur->manuf);
         free(st_cur);
         st_cur = st_next;
     }
