@@ -1,9 +1,9 @@
 #!/bin/sh
 
-#start smartconfig
+#start imlink
 ifconfig wlan0 up
-airmon-ng stop mon0
-airmon-ng start wlan0
+imlink-mon stop mon0
+imlink-mon start wlan0
 ifconfig wlan0 down
 ifconfig wlan0-1 down
 
@@ -16,7 +16,7 @@ echo "example: $0 xiaomi CH"
 echo "------------------------------------------------------------"
 #exit 1
 
-ap_info=`smartconfig-dump |grep SmartconfigResult`
+ap_info=`imlink-dump |grep ImlinkResult`
 #echo "$ap_info"
 
 ap_info=`echo ${ap_info#*:}`
@@ -86,11 +86,8 @@ done
 rgb_control blink 255 0 0 100
 echo "send data to port 18266"
 while :;do 
-   smartconfig-response -s ${ssid} -w ${password} -b ${bssid} -p 18266 -i ${source_ip}  
+   imlink-response -s ${ssid} -w ${password} -b ${bssid} -p 18266 -i ${source_ip}  
    usleep 500000
 done
-#uci set firewall.@zone[1].network='wan wan6 wwan'
-#uci commit firewall
-#/etc/init.d/firewall restart
 
 exit 0

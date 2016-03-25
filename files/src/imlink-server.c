@@ -1,5 +1,5 @@
 /* 
- * File:   smartconfig-server.c
+ * File:   imlink-server.c
  * Author: Haoyao Chen
  *
  * Created on Mar. 4, 10:34pm
@@ -21,7 +21,7 @@ char usage[] =
 "  %s - (C) 2016-2017 MOLMC Ltd. Co.\n"
 "  http://www.intorobot.com\n"
 "\n"
-"  usage: smartconfig-server <options> \n"
+"  usage: imlink-server <options> \n"
 "\n"
 "  Options:\n"
 "      -p --port                : udp socket port of User's App\n"

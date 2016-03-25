@@ -69,7 +69,7 @@
 #include "uniqueiv.h"
 #include "crypto.h"
 #include "osdep/osdep.h"
-#include "smartconfig-dump.h"
+#include "imlink-dump.h"
 #include "osdep/common.h"
 #include "common.h"
 
@@ -1628,7 +1628,7 @@ int check_frequency(struct wif *wi[], int cards)
 }
 
 //get essid corresponding to bssid
-void smartconfig_getApInfo(unsigned char *bssid, char *essid, char *enc, char *auth)
+void imlink_getApInfo(unsigned char *bssid, char *essid, char *enc, char *auth)
 {
 
     struct AP_info *ap_cur;
@@ -1693,7 +1693,7 @@ void smartconfig_getApInfo(unsigned char *bssid, char *essid, char *enc, char *a
     }
 }
 
-void smartconfig_crc8(unsigned char* crcTable)
+void imlink_crc8(unsigned char* crcTable)
 {
     int i, j;
     unsigned char remainder;
@@ -1712,7 +1712,7 @@ void smartconfig_crc8(unsigned char* crcTable)
     }
 }
 
-void smartconfig_decoder(int caplen, unsigned char* result)
+void imlink_decoder(int caplen, unsigned char* result)
 {
     int data;
     int out;
@@ -1735,7 +1735,7 @@ void smartconfig_decoder(int caplen, unsigned char* result)
     }
 }
 
-int smartconfig_filter_packet( unsigned char *h80211, int caplen, unsigned char* ap_bssid, unsigned char* dst_mac_05, int *type)
+int imlink_filter_packet( unsigned char *h80211, int caplen, unsigned char* ap_bssid, unsigned char* dst_mac_05, int *type)
 {
     int i;
     unsigned char bssid[6];
@@ -1812,7 +1812,7 @@ int smartconfig_filter_packet( unsigned char *h80211, int caplen, unsigned char*
     return(-1);
 }
 
-void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int cards)
+void imlink_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int cards)
 {
     long cycle_time;
     int caplen=0, fd_is_set, chan_count;
@@ -1824,7 +1824,7 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
     struct rx_info ri;
     unsigned char      buffer[2048];
     unsigned char      *h80211;
-    int *smartconfig_packet_num; //the num of packet that satisfy the format of smartconfig packet, i.e, the last three destination mac values are the same
+    int *imlink_packet_num; //the num of packet that satisfy the format of imlink packet, i.e, the last three destination mac values are the same
     unsigned char fixchannel = 0;
     unsigned char mac_05_cur;
     unsigned char dst_mac_05;
@@ -1856,12 +1856,12 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
     gettimeofday( &tv0, NULL );
     gettimeofday( &tv1, NULL );
 
-    smartconfig_crc8(crcTable);    //create crc8 table
+    imlink_crc8(crcTable);    //create crc8 table
 
     //use channels
     chan_count = getchancount(1);
-    smartconfig_packet_num = (int *) malloc(sizeof(int) * chan_count);
-    memset(smartconfig_packet_num, 0, sizeof(smartconfig_packet_num));
+    imlink_packet_num = (int *) malloc(sizeof(int) * chan_count);
+    memset(imlink_packet_num, 0, sizeof(imlink_packet_num));
     memset(data_seq, 0, sizeof(data_seq));
     memset(data_seq_status, 0, sizeof(data_seq_status));
     printf("existing channel number: %d, card num: %d \n", chan_count, cards);
@@ -1880,7 +1880,7 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
 
             G.singlechan = 1;
 
-            smartconfig_packet_num[chan] = 0;
+            imlink_packet_num[chan] = 0;
 
             //usleep(100);
             while( 1 )
@@ -1974,10 +1974,10 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
                         dump_add_packet( h80211, caplen, &ri, 0 );
 
                         wi_read_failed = 0;
-                        if(smartconfig_filter_packet(h80211, caplen, bssid, &dst_mac_05, &packet_type) == 1)
+                        if(imlink_filter_packet(h80211, caplen, bssid, &dst_mac_05, &packet_type) == 1)
                         {
-                            smartconfig_packet_num[chan]++;
-                            if(smartconfig_packet_num[chan] > 6)
+                            imlink_packet_num[chan]++;
+                            if(imlink_packet_num[chan] > 6)
                             {
                                 fixchannel = G.channels[chan];
                                 packet_type_cur = packet_type;
@@ -2067,7 +2067,7 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
                 }
                    
                 dump_add_packet( h80211, caplen, &ri, 0 );
-                if(smartconfig_filter_packet(h80211, caplen, bssid, &dst_mac_05, &packet_type) == 1)
+                if(imlink_filter_packet(h80211, caplen, bssid, &dst_mac_05, &packet_type) == 1)
                 {
                     //continue;
                     if(packet_type_cur != packet_type)
@@ -2085,7 +2085,7 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
 
                             if(mac_05_cur != dst_mac_05)
                             {
-                                smartconfig_decoder(caplen, de_value);
+                                imlink_decoder(caplen, de_value);
                                 data_byte[0][0] = de_value[0];
                                 data_byte[0][1] = de_value[1];
                                 data_byte[0][2] = de_value[2];
@@ -2094,7 +2094,7 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
                             }
                             else
                             {
-                                smartconfig_decoder(caplen, de_value);
+                                imlink_decoder(caplen, de_value);
                                 data_byte[data_byte_index][0] = de_value[0];
                                 data_byte[data_byte_index][1] = de_value[1];
                                 data_byte[data_byte_index][2] = de_value[2];
@@ -2197,13 +2197,13 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
                                 }
                                 else
                                 {
-                                    smartconfig_getApInfo(ApBSsid, ApESsid, ApEnc, ApAuth);
+                                    imlink_getApInfo(ApBSsid, ApESsid, ApEnc, ApAuth);
                                     if(strcmp(ApEnc, "WPA/WPA2") == 0 && strcmp(ApAuth, "PSK") ==0)
                                         strcpy(ApAuth, "psk2-mixed");
                                     if(strcmp(ApEnc, "WPA2") == 0 && strcmp(ApAuth, "PSK") == 0)
                                         strcpy(ApAuth, "psk2");
 
-                                    printf("SmartconfigResult:");
+                                    printf("ImlinkResult:");
                                     printf("SourceIP:%u.%u.%u.%u ", srcIP[0], srcIP[1], srcIP[2], srcIP[3]);
                                     printf("ESsid:%s ApEnc:%s ApAuth:%s ApPasswd:%s Channel:%d ", ApESsid, ApEnc, ApAuth, ApPasswd, ApChannel);
                                     printf("BSsid:%02X:%02X:%02X:%02X:%02X:%02X\n", ApBSsid[0], ApBSsid[1],ApBSsid[2],ApBSsid[3],ApBSsid[4],ApBSsid[5]);
@@ -2268,7 +2268,7 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
 
   packet_received:
 
-    free(smartconfig_packet_num);
+    free(imlink_packet_num);
 }
 int main( int argc, char *argv[] )
 {
@@ -2391,7 +2391,7 @@ int main( int argc, char *argv[] )
 
     sighandler( SIGWINCH );
 
-    smartconfig_scan_existing_aps(wi, fd_raw, &fdh, G.num_cards);
+    imlink_scan_existing_aps(wi, fd_raw, &fdh, G.num_cards);
 
     if(G.elapsed_time)
         free(G.elapsed_time);

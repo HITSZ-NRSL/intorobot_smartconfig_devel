@@ -1,10 +1,10 @@
 /*
- * File:   smartconfig-response.c
+ * File:   imlink-response.c
  * Author: Haoyao Chen
  *
  * Created on Jan 20 2016
  *
- * Description: Send response message back to User's App to notice the result of smart config.
+ * Description: Send response message back to User's App to notice the result of imlink config.
  */
 
 
@@ -30,7 +30,7 @@ char usage[] =
 "  %s - (C) 2016-2017 MOLMC Ltd. Co.\n"
 "  http://www.intorobot.com\n"
 "\n"
-"  usage: smartconfig-response <options> \n"
+"  usage: imlink-response <options> \n"
 "\n"
 "  Options:\n"
 "      -s --apssid              : AP's ssid\n"

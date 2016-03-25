@@ -1,7 +1,7 @@
 #!/bin/sh
 
-#kill already run smartconfig processes
-PROCESSES="smartconfig|ping"
+#kill already run imlink processes
+PROCESSES="imlink|ping"
 match=`ps -w | grep -E $PROCESSES | grep -v grep | wc -l`               
 echo $match
 if [ $match -gt 0 ]
