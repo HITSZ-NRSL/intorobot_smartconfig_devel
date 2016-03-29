@@ -32,7 +32,7 @@ endif
 
 
 SBINFILES       = aireplay-ng$(EXE) airodump-ng$(EXE) airserv-ng$(EXE) \
-		  airtun-ng$(EXE) airbase-ng$(EXE) besside-ng$(EXE) imlink-dump$(EXE) imlink-response$(EXE) imlink-server$(EXE) imlink-test$(EXE) imlink-udptest$(EXE)
+		  airtun-ng$(EXE) airbase-ng$(EXE) besside-ng$(EXE) imlink-dump$(EXE) imlink-response$(EXE) imlink-server$(EXE) imlink-test$(EXE) imlink-udptest$(EXE) iwscan-list$(EXE)
 		  
 OPTFILES	= aircrack-ng-opt-prof_gen aircrack-ng-opt \
 		  aircrack-ng-opt-prof prof/*
@@ -59,6 +59,7 @@ OBJS_SCR	= imlink-response.o common.o crypto.o uniqueiv.o osdep/radiotap/radiota
 OBJS_SCS	= imlink-server.o common.o crypto.o uniqueiv.o osdep/radiotap/radiotap.o
 OBJS_SCT	= imlink-test.o common.o crypto.o uniqueiv.o osdep/radiotap/radiotap.o
 OBJS_SCUT	= imlink-udptest.o common.o crypto.o uniqueiv.o osdep/radiotap/radiotap.o
+OBJS_IWS	= iwscan-list.o common.o crypto.o uniqueiv.o osdep/radiotap/radiotap.o
 ifneq ($(OSNAME), Linux)
 	OBJS_ADU	+= osdep/common.o
 	OBJS_SCR	+= osdep/common.o
@@ -167,6 +168,9 @@ imlink-test$(EXE): $(OBJS_SCT) $(LIBOSD)
 imlink-udptest$(EXE): $(OBJS_SCUT) $(LIBOSD)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS_SCUT) -o $(@) $(LIBS) $(LIBSSL) -lpthread $(LIBPCRE)
 
+iwscan-list$(EXE): $(OBJS_IWS) $(LIBOSD)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS_IWS) -o $(@) $(LIBS) $(LIBSSL) -lpthread $(LIBPCRE)
+
 airserv-ng$(EXE): $(OBJS_AS) $(LIBOSD)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS_AS) -o $(@) $(LIBS)
 
@@ -243,6 +247,7 @@ uninstall:
 	-rm -f $(DESTDIR)$(sbindir)/imlink-server$(EXE)
 	-rm -f $(DESTDIR)$(sbindir)/imlink-test$(EXE)
 	-rm -f $(DESTDIR)$(sbindir)/imlink-udptest$(EXE)
+	-rm -f $(DESTDIR)$(sbindir)/iwscan-list$(EXE)
 	-rm -f $(DESTDIR)$(sbindir)/airserv-ng$(EXE)
 	-rm -f $(DESTDIR)$(sbindir)/airtun-ng$(EXE)
 	-rm -f $(DESTDIR)$(sbindir)/aireplay-ng$(EXE)
