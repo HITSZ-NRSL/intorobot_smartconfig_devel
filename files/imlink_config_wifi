@@ -83,7 +83,7 @@ while :;do
       echo "Ping timeout"
       break
     fi
-    usleep 500000 
+    usleep 10000 
   done
   if [ $success == 1 ];then
     break;
