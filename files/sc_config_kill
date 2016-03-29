@@ -22,4 +22,8 @@ do
     i=$(($i+1))                                                                            
 done 
 
+imlink-mon stop mon0
+ifconfig wlan0 up
+ifconfig wlan0-1 up
+
 exit 0
