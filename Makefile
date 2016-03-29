@@ -52,6 +52,7 @@ define Package/molmc-imlink/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/imlink-dump $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/imlink-response $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/iwscan-list $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/imlink_config_wifi $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/sc_config_kill $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/sbin

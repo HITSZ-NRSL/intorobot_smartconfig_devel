@@ -16,71 +16,78 @@ echo "example: $0 xiaomi CH"
 echo "------------------------------------------------------------"
 #exit 1
 
-ap_info=`imlink-dump |grep ImlinkResult`
-#echo "$ap_info"
-
-ap_info=`echo ${ap_info#*:}`
-echo $ap_info
-source_ip=`echo ${ap_info#*:} | awk '{print $1}'`
-echo $source_ip
-ssid=`echo ${ap_info} | awk '{print $2}'`
-ssid=${ssid#*:}
-echo $ssid
-enc=`echo ${ap_info} | awk '{print $3}'`
-enc=${enc#*:}
-echo $enc
-auth=`echo ${ap_info} | awk '{print $4}'`
-auth=${auth#*:}
-echo $auth
-password=`echo ${ap_info} | awk '{print $5}'`
-password=${password#*:}
-if [ ! $password ]
-then
-   auth='none' 
-   password='NULL'
-fi
-echo $password
-channel=`echo ${ap_info} | awk '{print $6}'`
-channel=${channel#*:}
-echo $channel
-bssid=`echo ${ap_info} | awk '{print $7}'`
-bssid=${bssid#*:}
-echo $bssid
-
-uci set network.wwan='interface'
-uci set network.wwan.proto='dhcp'
-uci commit network
-uci set wireless.@wifi-device[0].channel=${channel}
-uci set wireless.@wifi-iface[0].disabled='1'
-uci set wireless.@wifi-iface[1].device='radio0'
-uci set wireless.@wifi-iface[1].network='wwan'
-uci set wireless.@wifi-iface[1].mode='sta'
-uci set wireless.@wifi-iface[1].ssid=${ssid}
-uci set wireless.@wifi-iface[1].key=${password}
-uci set wireless.@wifi-iface[1].encryption=${auth}
-uci commit wireless
-uci set firewall.@zone[1].network='wan wan6'
-uci commit firewall
-/etc/init.d/firewall restart
-/etc/init.d/network restart
-
-rgb_control blink 255 0 0 400
-count=1;
-while :;do
-  ping ${source_ip} -w50 -c 1
-  if [ $? == 0 ]
+success=0
+while :;do 
+  rgb_control blink 255 0 0 1000
+  ap_info=`imlink-dump |grep ImlinkResult`
+  #echo "$ap_info"
+  ap_info=`echo ${ap_info#*:}`
+  echo $ap_info
+  source_ip=`echo ${ap_info#*:} | awk '{print $1}'`
+  echo $source_ip
+  ssid=`echo ${ap_info} | awk '{print $2}'`
+  ssid=${ssid#*:}
+  echo $ssid
+  enc=`echo ${ap_info} | awk '{print $3}'`
+  enc=${enc#*:}
+  echo $enc
+  auth=`echo ${ap_info} | awk '{print $4}'`
+  auth=${auth#*:}
+  echo $auth
+  password=`echo ${ap_info} | awk '{print $5}'`
+  password=${password#*:}
+  if [ ! $password ]
   then
-    break
+    auth='none' 
+    password='NULL'
   fi
-  count=$(($count+1))
-  echo $count
-  if [ $count -gt 200 ]
-  then
-    rgb_control blink 255 0 0 3000
-    echo "Ping timeout"
-    exit 1
+  echo $password
+  channel=`echo ${ap_info} | awk '{print $6}'`
+  channel=${channel#*:}
+  echo $channel
+  bssid=`echo ${ap_info} | awk '{print $7}'`
+  bssid=${bssid#*:}
+  echo $bssid
+
+  uci set network.wwan='interface'
+  uci set network.wwan.proto='dhcp'
+  uci commit network
+  uci set wireless.@wifi-device[0].channel=${channel}
+  uci set wireless.@wifi-iface[0].disabled='1'
+  uci set wireless.@wifi-iface[1].device='radio0'
+  uci set wireless.@wifi-iface[1].network='wwan'
+  uci set wireless.@wifi-iface[1].mode='sta'
+  uci set wireless.@wifi-iface[1].ssid=${ssid}
+  uci set wireless.@wifi-iface[1].key=${password}
+  uci set wireless.@wifi-iface[1].encryption=${auth}
+  uci commit wireless
+  uci set firewall.@zone[1].network='wan wan6'
+  uci commit firewall
+  /etc/init.d/firewall restart
+  /etc/init.d/network restart
+
+  rgb_control blink 255 0 0 400
+  count=1;
+  while :;do
+    ping ${source_ip} -w50 -c 1
+    if [ $? == 0 ]
+    then
+      success=1
+      break
+    fi
+    count=$(($count+1))
+    echo $count
+    if [ $count -gt 200 ]
+    then
+      rgb_control blink 255 0 0 3000
+      echo "Ping timeout"
+      break
+    fi
+    usleep 500000 
+  done
+  if [ $success == 1 ];then
+    break;
   fi
-  usleep 100000 
 done
 
 rgb_control blink 255 0 0 100
