@@ -77,7 +77,7 @@
 GCRY_THREAD_OPTION_PTHREAD_IMPL;
 #endif
 
-unsigned char en_printinfo = 1;
+unsigned char en_printinfo = 0;
 
 void reset_term() {
     struct termios oldt,
@@ -1782,7 +1782,6 @@ int imlink_filter_packet( unsigned char *h80211, int caplen, unsigned char* ap_b
             //	break;  //WDS -> Transmitter taken as BSSID
     }
 
-#if 1
     if ((h80211[1] & 3) == 2 || (h80211[1] & 3) == 1)
         if ((h80211[1] & 3) == 1)
         {
@@ -1790,7 +1789,6 @@ int imlink_filter_packet( unsigned char *h80211, int caplen, unsigned char* ap_b
             {
                 if(dst_mac[0] != 0xff && dst_mac[1] !=0xff && dst_mac[2] != 0xff && dst_mac[3] != 0xff && dst_mac[4] != 0xff && dst_mac[5]!=0xff )
                 {
-#endif
                     if(en_printinfo > 0)
                     {
                         printf("The dst mac %02X:%02X:%02X:%02X:%02X:%02X ", dst_mac[0], dst_mac[1],dst_mac[2],dst_mac[3],dst_mac[4],dst_mac[5]);
@@ -1809,10 +1807,8 @@ int imlink_filter_packet( unsigned char *h80211, int caplen, unsigned char* ap_b
                     memcpy( ap_bssid, bssid, 6 );  //FromDS
                     memcpy( ap_src_mac, src_mac, 6 );  //FromDS
                     return(1);
-#if 1
                 }
             }
-#endif
         }
 
     return(-1);
@@ -1876,7 +1872,7 @@ void imlink_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int cards
     memset(imlink_packet_num, 0, sizeof(imlink_packet_num));
     memset(data_seq, 0, sizeof(data_seq));
     memset(data_seq_status, 0, sizeof(data_seq_status));
-    printf("existing channel number: %d, card num: %d \n", chan_count, cards);
+    //printf("existing channel number: %d, card num: %d \n", chan_count, cards);
 
     while(1)
     {
@@ -1959,7 +1955,6 @@ void imlink_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int cards
                             snprintf(G.message, sizeof(G.message), "][ interface %s down ", wi_get_ifname(wi[i]));
 
                             //reopen in monitor mode
-
                             strncpy(ifnam[i], wi_get_ifname(wi[i]), sizeof(ifnam)-1);
                             ifnam[sizeof(ifnam)-1] = 0;
 
@@ -2008,8 +2003,7 @@ void imlink_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int cards
         if(fixchannel != 0)
             break;
     }
-    // printf("Ap num: %d", get_ap_list_count());
-    // print_ap_list();
+
     for(i = 0; i<4; i++)
     {
         mac_array_index[i] = 0;
@@ -2018,12 +2012,6 @@ void imlink_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int cards
 
     ApChannel = fixchannel;
     while(1){
-        //Fix the channel
-        //printf("Fixchannel: %d", fixchannel);
-        //wi_set_channel(wi[0], fixchannel);
-        //G.singlechan = 1;
-        //ApChannel = fixchannel;
-
         /* capture one packet */
         FD_ZERO( &rfds );
  
@@ -2059,7 +2047,6 @@ void imlink_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int cards
                     snprintf(G.message, sizeof(G.message), "][ interface %s down ", wi_get_ifname(wi[i]));
 
                     //reopen in monitor mode
-
                     strncpy(ifnam[i], wi_get_ifname(wi[i]), sizeof(ifnam)-1);
                     ifnam[sizeof(ifnam)-1] = 0;
 
@@ -2147,7 +2134,6 @@ void imlink_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int cards
                                                 printf("\n");
 
                                             }
-
                                             data_seq[data_byte[1][1]] = data_value;
                                             data_seq_status[data_byte[1][1]] = 1;  //data filled
                                         }
@@ -2198,10 +2184,10 @@ void imlink_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int cards
                                     is_find_passwd = 1;
                                 }
 
-                                if(is_find_passwd == 1)
-                                    printf("Found passwd: %s\n", ApPasswd);
-                                else
+                                if(is_find_passwd != 1)
                                     continue;
+                                
+                                //printf("Found passwd: %s\n", ApPasswd);
 
                                 srcIP[0] = data_seq[5];
                                 srcIP[1] = data_seq[6];
@@ -2209,10 +2195,7 @@ void imlink_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int cards
                                 srcIP[3] = data_seq[8];
 
                                 if(ApESsid == "")
-                                {
                                     printf("SSID Error, retry\n");
-
-                                }
                                 else
                                 {
                                     imlink_getApInfo(ApBSsid, ApESsid, ApEnc, ApAuth);
