@@ -69,7 +69,7 @@
 #include "uniqueiv.h"
 #include "crypto.h"
 #include "osdep/osdep.h"
-#include "smartconfig-dump.h"
+#include "imlink-dump.h"
 #include "osdep/common.h"
 #include "common.h"
 
@@ -77,7 +77,7 @@
 GCRY_THREAD_OPTION_PTHREAD_IMPL;
 #endif
 
-unsigned char en_printinfo = 1;
+unsigned char en_printinfo = 0;
 
 void reset_term() {
     struct termios oldt,
@@ -1628,7 +1628,7 @@ int check_frequency(struct wif *wi[], int cards)
 }
 
 //get essid corresponding to bssid
-void smartconfig_getApInfo(unsigned char *bssid, char *essid, char *enc, char *auth)
+void imlink_getApInfo(unsigned char *bssid, char *essid, char *enc, char *auth)
 {
 
     struct AP_info *ap_cur;
@@ -1693,7 +1693,7 @@ void smartconfig_getApInfo(unsigned char *bssid, char *essid, char *enc, char *a
     }
 }
 
-void smartconfig_crc8(unsigned char* crcTable)
+void imlink_crc8(unsigned char* crcTable)
 {
     int i, j;
     unsigned char remainder;
@@ -1712,7 +1712,7 @@ void smartconfig_crc8(unsigned char* crcTable)
     }
 }
 
-void smartconfig_decoder(int caplen, unsigned char* result)
+void imlink_decoder(int caplen, unsigned char* result)
 {
     int data;
     int out;
@@ -1735,11 +1735,12 @@ void smartconfig_decoder(int caplen, unsigned char* result)
     }
 }
 
-int smartconfig_filter_packet( unsigned char *h80211, int caplen, unsigned char* ap_bssid, unsigned char* dst_mac_05, int *type)
+int imlink_filter_packet( unsigned char *h80211, int caplen, unsigned char* ap_bssid, unsigned char* ap_src_mac, unsigned char* dst_mac_05, int *type)
 {
     int i;
     unsigned char bssid[6];
     unsigned char dst_mac[6] = {0,0,0,0,0,0};
+    unsigned char src_mac[6] = {0,0,0,0,0,0};
     type = 1;
     /* skip all non probe response frames in active scanning simulation mode */
     if( G.active_scan_sim > 0 && h80211[0] != 0x50 )
@@ -1768,10 +1769,12 @@ int smartconfig_filter_packet( unsigned char *h80211, int caplen, unsigned char*
         //	break;  //Adhoc
         case  1:
             memcpy( bssid, h80211 +  4, 6 );
+            memcpy( src_mac, h80211 + 10, 6);
             memcpy( dst_mac, h80211 +  16, 6 );  //DS
             break;  //ToDS
         case  2:
             memcpy( bssid, h80211 + 10, 6 );
+            memcpy( src_mac, h80211 + 16, 6);
             memcpy( dst_mac, h80211 +  4, 6 );  //DS
             break;  //FromDS
             //case  3:
@@ -1779,7 +1782,6 @@ int smartconfig_filter_packet( unsigned char *h80211, int caplen, unsigned char*
             //	break;  //WDS -> Transmitter taken as BSSID
     }
 
-#if 1
     if ((h80211[1] & 3) == 2 || (h80211[1] & 3) == 1)
         if ((h80211[1] & 3) == 1)
         {
@@ -1787,11 +1789,12 @@ int smartconfig_filter_packet( unsigned char *h80211, int caplen, unsigned char*
             {
                 if(dst_mac[0] != 0xff && dst_mac[1] !=0xff && dst_mac[2] != 0xff && dst_mac[3] != 0xff && dst_mac[4] != 0xff && dst_mac[5]!=0xff )
                 {
-#endif
                     if(en_printinfo > 0)
                     {
-                        printf("The dst mac address is %02X:%02X:%02X:%02X:%02X:%02X ", dst_mac[0], dst_mac[1],dst_mac[2],dst_mac[3],dst_mac[4],dst_mac[5]);
-                        printf("The source bssid is %02X:%02X:%02X:%02X:%02X:%02X \n", bssid[0], bssid[1],bssid[2],bssid[3],bssid[4],bssid[5]);
+                        printf("The dst mac %02X:%02X:%02X:%02X:%02X:%02X ", dst_mac[0], dst_mac[1],dst_mac[2],dst_mac[3],dst_mac[4],dst_mac[5]);
+                        printf("The src mac %02X:%02X:%02X:%02X:%02X:%02X",  src_mac[0], src_mac[1],src_mac[2],src_mac[3],src_mac[4],src_mac[5]);
+                        printf("The src bssid %02X:%02X:%02X:%02X:%02X:%02X \n", bssid[0], bssid[1],bssid[2],bssid[3],bssid[4],bssid[5]);
+
                         printf("The caplen: %d", caplen);
                         if((h80211[1] & 3) == 2)
                             printf("Type: %d\n", 2);
@@ -1802,17 +1805,16 @@ int smartconfig_filter_packet( unsigned char *h80211, int caplen, unsigned char*
                     type = (int)(h80211[1] & 3);
                     dst_mac_05 = dst_mac[5];
                     memcpy( ap_bssid, bssid, 6 );  //FromDS
+                    memcpy( ap_src_mac, src_mac, 6 );  //FromDS
                     return(1);
-#if 1
                 }
             }
-#endif
         }
 
     return(-1);
 }
 
-void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int cards)
+void imlink_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int cards)
 {
     long cycle_time;
     int caplen=0, fd_is_set, chan_count;
@@ -1824,19 +1826,25 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
     struct rx_info ri;
     unsigned char      buffer[2048];
     unsigned char      *h80211;
-    int *smartconfig_packet_num; //the num of packet that satisfy the format of smartconfig packet, i.e, the last three destination mac values are the same
+    int *imlink_packet_num; //the num of packet that satisfy the format of imlink packet, i.e, the last three destination mac values are the same
     unsigned char fixchannel = 0;
     unsigned char mac_05_cur;
     unsigned char dst_mac_05;
-    unsigned char dst_mac_05_array[4];
-    int mac_array_index;
-    unsigned int cap_length_array[4];
+    unsigned char dst_mac_05_array[4][4]; // 4 listenning channels for different source agent
+    int mac_array_index[4];
+    int src_mac_index;
+    unsigned int cap_length_array[4][4];
     int enc_constant = 0;              //The constant packet length due to encryption
     signed short is_guidecode_received = -1;
     unsigned char data_byte[3][3];
     unsigned char data_byte_index = 0;
     unsigned char bssid[6];
     unsigned char ApBSsid[6];
+    unsigned char src_mac[6] = {0,0,0,0,0,0}; //the src mac of the agent sending imlink packets
+    unsigned char src_mac_cur[6] = {0,0,0,0,0,0}; //the src mac of the agent sending imlink packets
+    unsigned char src_mac_array[4][6] = {{0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}}; //the src mac of the agent sending imlink packets
+    unsigned char src_mac_array_occ[4];
+
     int  ApChannel;
     char ApPasswd[30]; //max 30 password long
     char ApESsid[30];
@@ -1856,15 +1864,15 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
     gettimeofday( &tv0, NULL );
     gettimeofday( &tv1, NULL );
 
-    smartconfig_crc8(crcTable);    //create crc8 table
+    imlink_crc8(crcTable);    //create crc8 table
 
     //use channels
     chan_count = getchancount(1);
-    smartconfig_packet_num = (int *) malloc(sizeof(int) * chan_count);
-    memset(smartconfig_packet_num, 0, sizeof(smartconfig_packet_num));
+    imlink_packet_num = (int *) malloc(sizeof(int) * chan_count);
+    memset(imlink_packet_num, 0, sizeof(imlink_packet_num));
     memset(data_seq, 0, sizeof(data_seq));
     memset(data_seq_status, 0, sizeof(data_seq_status));
-    printf("existing channel number: %d, card num: %d \n", chan_count, cards);
+    //printf("existing channel number: %d, card num: %d \n", chan_count, cards);
 
     while(1)
     {
@@ -1880,7 +1888,7 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
 
             G.singlechan = 1;
 
-            smartconfig_packet_num[chan] = 0;
+            imlink_packet_num[chan] = 0;
 
             //usleep(100);
             while( 1 )
@@ -1947,7 +1955,6 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
                             snprintf(G.message, sizeof(G.message), "][ interface %s down ", wi_get_ifname(wi[i]));
 
                             //reopen in monitor mode
-
                             strncpy(ifnam[i], wi_get_ifname(wi[i]), sizeof(ifnam)-1);
                             ifnam[sizeof(ifnam)-1] = 0;
 
@@ -1974,10 +1981,10 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
                         dump_add_packet( h80211, caplen, &ri, 0 );
 
                         wi_read_failed = 0;
-                        if(smartconfig_filter_packet(h80211, caplen, bssid, &dst_mac_05, &packet_type) == 1)
+                        if(imlink_filter_packet(h80211, caplen, bssid, src_mac, &dst_mac_05, &packet_type) == 1)
                         {
-                            smartconfig_packet_num[chan]++;
-                            if(smartconfig_packet_num[chan] > 6)
+                            imlink_packet_num[chan]++;
+                            if(imlink_packet_num[chan] > 6)
                             {
                                 fixchannel = G.channels[chan];
                                 packet_type_cur = packet_type;
@@ -1996,17 +2003,15 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
         if(fixchannel != 0)
             break;
     }
-    // printf("Ap num: %d", get_ap_list_count());
-    // print_ap_list();
-    mac_array_index = 0;
+
+    for(i = 0; i<4; i++)
+    {
+        mac_array_index[i] = 0;
+        src_mac_array_occ[i] = 0;
+    }
+
     ApChannel = fixchannel;
     while(1){
-        //Fix the channel
-        //printf("Fixchannel: %d", fixchannel);
-        //wi_set_channel(wi[0], fixchannel);
-        //G.singlechan = 1;
-        //ApChannel = fixchannel;
-
         /* capture one packet */
         FD_ZERO( &rfds );
  
@@ -2042,7 +2047,6 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
                     snprintf(G.message, sizeof(G.message), "][ interface %s down ", wi_get_ifname(wi[i]));
 
                     //reopen in monitor mode
-
                     strncpy(ifnam[i], wi_get_ifname(wi[i]), sizeof(ifnam)-1);
                     ifnam[sizeof(ifnam)-1] = 0;
 
@@ -2067,14 +2071,15 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
                 }
                    
                 dump_add_packet( h80211, caplen, &ri, 0 );
-                if(smartconfig_filter_packet(h80211, caplen, bssid, &dst_mac_05, &packet_type) == 1)
+                if(imlink_filter_packet(h80211, caplen, bssid, src_mac, &dst_mac_05, &packet_type) == 1)
                 {
                     //continue;
                     if(packet_type_cur != packet_type)
                         continue;
                     if(is_guidecode_received == 1 && enc_constant >= 0)
                     {
-
+                        if(memcmp(src_mac_cur, src_mac, 6) != 0) 
+                            continue;
                         if(ApBSsid[0] == bssid[0] && ApBSsid[1] == bssid[1] && ApBSsid[2] == bssid[2]
                            && ApBSsid[3] == bssid[3] && ApBSsid[4] == bssid[4] && ApBSsid[5] == bssid[5])
                         {
@@ -2085,7 +2090,7 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
 
                             if(mac_05_cur != dst_mac_05)
                             {
-                                smartconfig_decoder(caplen, de_value);
+                                imlink_decoder(caplen, de_value);
                                 data_byte[0][0] = de_value[0];
                                 data_byte[0][1] = de_value[1];
                                 data_byte[0][2] = de_value[2];
@@ -2094,7 +2099,7 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
                             }
                             else
                             {
-                                smartconfig_decoder(caplen, de_value);
+                                imlink_decoder(caplen, de_value);
                                 data_byte[data_byte_index][0] = de_value[0];
                                 data_byte[data_byte_index][1] = de_value[1];
                                 data_byte[data_byte_index][2] = de_value[2];
@@ -2129,7 +2134,6 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
                                                 printf("\n");
 
                                             }
-
                                             data_seq[data_byte[1][1]] = data_value;
                                             data_seq_status[data_byte[1][1]] = 1;  //data filled
                                         }
@@ -2180,10 +2184,10 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
                                     is_find_passwd = 1;
                                 }
 
-                                if(is_find_passwd == 1)
-                                    printf("Found passwd: %s\n", ApPasswd);
-                                else
+                                if(is_find_passwd != 1)
                                     continue;
+                                
+                                //printf("Found passwd: %s\n", ApPasswd);
 
                                 srcIP[0] = data_seq[5];
                                 srcIP[1] = data_seq[6];
@@ -2191,19 +2195,16 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
                                 srcIP[3] = data_seq[8];
 
                                 if(ApESsid == "")
-                                {
                                     printf("SSID Error, retry\n");
-
-                                }
                                 else
                                 {
-                                    smartconfig_getApInfo(ApBSsid, ApESsid, ApEnc, ApAuth);
+                                    imlink_getApInfo(ApBSsid, ApESsid, ApEnc, ApAuth);
                                     if(strcmp(ApEnc, "WPA/WPA2") == 0 && strcmp(ApAuth, "PSK") ==0)
                                         strcpy(ApAuth, "psk2-mixed");
                                     if(strcmp(ApEnc, "WPA2") == 0 && strcmp(ApAuth, "PSK") == 0)
                                         strcpy(ApAuth, "psk2");
 
-                                    printf("SmartconfigResult:");
+                                    printf("ImlinkResult:");
                                     printf("SourceIP:%u.%u.%u.%u ", srcIP[0], srcIP[1], srcIP[2], srcIP[3]);
                                     printf("ESsid:%s ApEnc:%s ApAuth:%s ApPasswd:%s Channel:%d ", ApESsid, ApEnc, ApAuth, ApPasswd, ApChannel);
                                     printf("BSsid:%02X:%02X:%02X:%02X:%02X:%02X\n", ApBSsid[0], ApBSsid[1],ApBSsid[2],ApBSsid[3],ApBSsid[4],ApBSsid[5]);
@@ -2217,40 +2218,61 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
                     }
                     else
                     {
-                        if(mac_array_index == 0){
-                            dst_mac_05_array[mac_array_index] = dst_mac_05;
-                            cap_length_array[mac_array_index] = caplen;
-                            mac_array_index++;
-                        }
-                        else if(dst_mac_05_array[mac_array_index-1]!=dst_mac_05)
+                        if(memcmp(src_mac_array[0], src_mac, 6))
+                            src_mac_index = 0;
+                        else if(memcmp(src_mac_array[1], src_mac, 6))
+                            src_mac_index = 1;
+                        else if(memcmp(src_mac_array[2], src_mac, 6))
+                            src_mac_index = 2;
+                        else if(memcmp(src_mac_array[3], src_mac, 6))
+                            src_mac_index = 3;
+                        else
                         {
-                            mac_array_index = 0;
-                            dst_mac_05_array[mac_array_index] = dst_mac_05;
-                            cap_length_array[mac_array_index] = caplen;
-                            mac_array_index++;
+                            if(src_mac_array_occ[0] == 0)
+                               memcpy(src_mac_array[0], src_mac, 6);
+                            else if(src_mac_array_occ[1] == 0)
+                               memcpy(src_mac_array[1], src_mac, 6);
+                            else if(src_mac_array_occ[2] == 0)
+                               memcpy(src_mac_array[2], src_mac, 6);
+                            else if(src_mac_array_occ[3] == 0) 
+                               memcpy(src_mac_array[3], src_mac, 6);
                         }
-                        else if(mac_array_index < 4)
+
+                        if(mac_array_index[src_mac_index] == 0){
+                            dst_mac_05_array[src_mac_index][mac_array_index[src_mac_index]] = dst_mac_05;
+                            cap_length_array[src_mac_index][mac_array_index[src_mac_index]] = caplen;
+                            mac_array_index[src_mac_index]++;
+                        }
+                        else if(dst_mac_05_array[src_mac_index][mac_array_index[src_mac_index]-1]!=dst_mac_05)
                         {
-                            if((cap_length_array[mac_array_index - 1] - caplen) != 1)
+                            mac_array_index[src_mac_index] = 0;
+                            dst_mac_05_array[src_mac_index][mac_array_index[src_mac_index]] = dst_mac_05;
+                            cap_length_array[src_mac_index][mac_array_index[src_mac_index]] = caplen;
+                            mac_array_index[src_mac_index]++;
+                        }
+                        else if(mac_array_index[src_mac_index] < 4)
+                        {
+                            if((cap_length_array[src_mac_index][mac_array_index[src_mac_index] - 1] - caplen) != 1)
                             {
-                                mac_array_index = 0;
-                                dst_mac_05_array[mac_array_index] = dst_mac_05;
-                                cap_length_array[mac_array_index] = caplen;
-                                mac_array_index++;
+                                mac_array_index[src_mac_index] = 0;
+                                dst_mac_05_array[src_mac_index][mac_array_index[src_mac_index]] = dst_mac_05;
+                                cap_length_array[src_mac_index][mac_array_index[src_mac_index]] = caplen;
+                                mac_array_index[src_mac_index]++;
                             }
                             else
                             {
-                                dst_mac_05_array[mac_array_index] = dst_mac_05;
-                                cap_length_array[mac_array_index] = caplen;
-                                mac_array_index++;
+                                dst_mac_05_array[src_mac_index][mac_array_index[src_mac_index]] = dst_mac_05;
+                                cap_length_array[src_mac_index][mac_array_index[src_mac_index]] = caplen;
+                                mac_array_index[src_mac_index]++;
                             }
 
-                            if(mac_array_index == 4)
+                            if(mac_array_index[src_mac_index] == 4)
                             {
-                                enc_constant = cap_length_array[0] - 515;
+                                enc_constant = cap_length_array[src_mac_index][0] - 515;
                                 mac_05_cur = dst_mac_05;
                                 is_guidecode_received = 1;
                                 memcpy(ApBSsid, bssid, 6);
+                                memcpy(src_mac_cur, src_mac, 6);
                                 //printf("Received the Guide Code: %d, %d, %d, %d \n", cap_length_array[0],cap_length_array[1],cap_length_array[2],cap_length_array[3]);
                             }
                         }
@@ -2268,7 +2290,7 @@ void smartconfig_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int 
 
   packet_received:
 
-    free(smartconfig_packet_num);
+    free(imlink_packet_num);
 }
 int main( int argc, char *argv[] )
 {
@@ -2391,7 +2413,7 @@ int main( int argc, char *argv[] )
 
     sighandler( SIGWINCH );
 
-    smartconfig_scan_existing_aps(wi, fd_raw, &fdh, G.num_cards);
+    imlink_scan_existing_aps(wi, fd_raw, &fdh, G.num_cards);
 
     if(G.elapsed_time)
         free(G.elapsed_time);
