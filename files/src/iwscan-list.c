@@ -1626,10 +1626,79 @@ int check_frequency(struct wif *wi[], int cards)
     }
     return 0;
 }
+
+//clean aps with same names
+void clean_aps()
+{
+    int i;
+    char essid[50];  //can be a bug here
+    char essid_array[50]; //max ap number 
+    char power_array[50]; //max ap number 
+    int  essid_index=0;
+    char enc[10];
+    char auth[10];
+    char securitystr[23];
+
+    int Rssi_Quality;
+    struct AP_info *ap_cur;
+    int idx;
+
+    ap_cur = G.ap_end;
+
+    while( ap_cur != NULL )
+    {
+        /* skip APs with only one packet, or those older than 2 min.
+         * always skip if bssid == broadcast */
+        if( ap_cur->nb_pkt < 2 || time( NULL ) - ap_cur->tlast > G.berlin ||
+            memcmp( ap_cur->bssid, BROADCAST, 6 ) == 0 )
+        {
+            ap_cur = ap_cur->prev;
+            continue;
+        }
+        if(ap_cur->security != 0 && G.f_encrypt != 0 && ((ap_cur->security & G.f_encrypt) == 0))
+        {
+            ap_cur = ap_cur->prev;
+            continue;
+        }
+        if(ap_cur->ssid_length <= 0 || ap_cur->essid == NULL)
+        {
+            ap_cur = ap_cur->prev;
+            continue;
+        }
+
+        /*SSID*/
+        if(ap_cur->ssid_length > 30)
+        {
+            sprintf(essid, "0x");
+            for (idx = 0; (idx < 30) && (idx < ap_cur->ssid_length); idx++)
+                sprintf(essid + 2 + (idx*2), "%02X", ap_cur->essid[idx]);
+        }
+        else
+            strcpy(essid, ap_cur->essid);
+
+        if(essid_index >= 50)
+            break;
+
+        for(i=0; i<essid_index; i++)
+        {
+            if(strcmp(essid, essid_array[i])) 
+	    {
+               if (ap_cur->avg_power >= power_array[i] )
+                {
+                    power_array[i] = ap_cur->avg_power;
+                } 
+            }	
+        }
+
+        ap_cur = ap_cur->prev;
+    }
+}
 //get essid corresponding to bssid
 void iwscan_print_aplist()
 {
     char essid[50];  //can be a bug here
+    char essid_array[50]; //max ap number 
+    int  essid_index=0;
     char enc[10];
     char auth[10];
     char securitystr[23];
@@ -1701,8 +1770,6 @@ void iwscan_print_aplist()
             continue;
         }
 
-        /*Channel*/
-        sprintf(msg+strlen(msg),"%-4d,", ap_cur->channel);
         /*SSID*/
         if(ap_cur->ssid_length > 30)
         {
@@ -1712,16 +1779,6 @@ void iwscan_print_aplist()
         }
         else
             strcpy(essid, ap_cur->essid);
-        sprintf(msg+strlen(msg),"%-33s,", essid);
-
-        /*BSSID*/
-        sprintf(msg+strlen(msg),"%02x:%02x:%02x:%02x:%02x:%02x,   ",
-                ap_cur->bssid[0],
-                ap_cur->bssid[1],
-                ap_cur->bssid[2],
-                ap_cur->bssid[3],
-                ap_cur->bssid[4],
-                ap_cur->bssid[5]);
 
         /*Security*/
         if(!strcmp(enc, "NONE"))
@@ -1730,7 +1787,6 @@ void iwscan_print_aplist()
             sprintf(securitystr, "WEP");
         else
             sprintf(securitystr, "%s/%s", auth, enc);
-        sprintf(msg+strlen(msg), "%-23s, ", securitystr);
 
         /* Rssi*/
         if (ap_cur->avg_power >= -50)
@@ -1741,8 +1797,18 @@ void iwscan_print_aplist()
             Rssi_Quality = (int)(((ap_cur->avg_power + 90) * 26)/10);
         else    /* < -84 dbm*/
             Rssi_Quality = 0;
-        sprintf(msg+strlen(msg),"%-9d", Rssi_Quality);
 
+        sprintf(msg+strlen(msg),"%-4d,", ap_cur->channel);
+        sprintf(msg+strlen(msg),"%-33s,", essid);
+        sprintf(msg+strlen(msg),"%02x:%02x:%02x:%02x:%02x:%02x,   ",
+                ap_cur->bssid[0],
+                ap_cur->bssid[1],
+                ap_cur->bssid[2],
+                ap_cur->bssid[3],
+                ap_cur->bssid[4],
+                ap_cur->bssid[5]);
+        sprintf(msg+strlen(msg), "%-23s, ", securitystr);
+        sprintf(msg+strlen(msg),"%-9d", Rssi_Quality);
         sprintf(msg+strlen(msg),"\n");
 
         ap_cur = ap_cur->prev;
@@ -1855,7 +1921,7 @@ void imlink_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int cards
             + ( tv2.tv_usec - tv3.tv_usec );
 
         //scan timeout
-        if( cycle_time > 200000)
+        if( cycle_time > 3000000)
         {
             break;
         }
