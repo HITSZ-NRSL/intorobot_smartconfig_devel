@@ -1643,7 +1643,7 @@ void iwscan_print_aplist()
     msg = (char *) malloc(sizeof(char) * totallen);
     memset(msg, 0 , totallen);
     sprintf(msg,"%s","\n");
-    sprintf(msg+strlen(msg),"%-4s%-33s%-23s%-23s%-9s%\n",
+    sprintf(msg+strlen(msg),"%-4s%-33s%-23s%-23s%-9s\n",
             "Ch", "SSID", "BSSID", "Security", "Siganl(%)");
 
     ap_cur = G.ap_end;
