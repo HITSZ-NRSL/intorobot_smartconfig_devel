@@ -53,13 +53,13 @@ while :;do
   uci set network.wwan.proto='dhcp'
   uci commit network
   uci set wireless.@wifi-device[0].channel=${channel}
-  uci set wireless.@wifi-iface[0].disabled='1'
-  uci set wireless.@wifi-iface[1].device='radio0'
-  uci set wireless.@wifi-iface[1].network='wwan'
-  uci set wireless.@wifi-iface[1].mode='sta'
-  uci set wireless.@wifi-iface[1].ssid=${ssid}
-  uci set wireless.@wifi-iface[1].key=${password}
-  uci set wireless.@wifi-iface[1].encryption=${auth}
+  uci set wireless.atom-ap.disabled='1'
+  uci set wireless.atom-sta.device='radio0'
+  uci set wireless.atom-sta.network='wwan'
+  uci set wireless.atom-sta.mode='sta'
+  uci set wireless.atom-sta.ssid=${ssid}
+  uci set wireless.atom-sta.key=${password}
+  uci set wireless.atom-sta.encryption=${auth}
   uci commit wireless
   uci set firewall.@zone[1].network='wan wan6'
   uci commit firewall
