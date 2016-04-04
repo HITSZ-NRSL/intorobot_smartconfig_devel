@@ -2203,6 +2203,11 @@ void imlink_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int cards
                                         strcpy(ApAuth, "psk2-mixed");
                                     if(strcmp(ApEnc, "WPA2") == 0 && strcmp(ApAuth, "PSK") == 0)
                                         strcpy(ApAuth, "psk2");
+                                    if(strcmp(ApEnc, "WPA") == 0 && strcmp(ApAuth, "PSK") == 0)
+                                        strcpy(ApAuth, "psk");
+
+                                    if(strcmp(ApEnc, "NONE") == 0)
+                                        strcpy(ApAuth, "none");
 
                                     printf("ImlinkResult:");
                                     printf("SourceIP:%u.%u.%u.%u ", srcIP[0], srcIP[1], srcIP[2], srcIP[3]);

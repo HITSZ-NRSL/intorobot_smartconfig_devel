@@ -1325,84 +1325,6 @@ int dump_add_packet( unsigned char *h80211, int caplen, struct rx_info *ri, int 
                     }
                 }
 
-//                /* not found in either AP list or ST list, look through NA list */
-//                na_cur = G.na_1st;
-//                na_prv = NULL;
-//
-//                while( na_cur != NULL )
-//                {
-//                    if( ! memcmp( na_cur->namac, namac, 6 ) )
-//                        break;
-//
-//                    na_prv = na_cur;
-//                    na_cur = na_cur->next;
-//                }
-//
-//                /* update our chained list of unknown stations */
-//                /* if it's a new mac, add it */
-//
-//                if( na_cur == NULL )
-//                {
-//                    if( ! ( na_cur = (struct NA_info *) malloc(
-//                                    sizeof( struct NA_info ) ) ) )
-//                    {
-//                        perror( "malloc failed" );
-//                        return( 1 );
-//                    }
-//
-//                    memset( na_cur, 0, sizeof( struct NA_info ) );
-//
-//                    if( G.na_1st == NULL )
-//                        G.na_1st = na_cur;
-//                    else
-//                        na_prv->next  = na_cur;
-//
-//                    memcpy( na_cur->namac, namac, 6 );
-//
-//                    na_cur->prev = na_prv;
-//
-//                    gettimeofday(&(na_cur->tv), NULL);
-//                    na_cur->tinit = time( NULL );
-//                    na_cur->tlast = time( NULL );
-//
-//                    na_cur->power   = -1;
-//                    na_cur->channel = -1;
-//                    na_cur->ack     = 0;
-//                    na_cur->ack_old = 0;
-//                    na_cur->ackps   = 0;
-//                    na_cur->cts     = 0;
-//                    na_cur->rts_r   = 0;
-//                    na_cur->rts_t   = 0;
-//                }
-//
-//                /* update the last time seen & power*/
-//
-//                na_cur->tlast = time( NULL );
-//                na_cur->power = ri->ri_power;
-//                na_cur->channel = ri->ri_channel;
-//
-//                switch(h80211[0] & 0xF0)
-//                {
-//                    case 0xB0:
-//                        if(p == h80211+4)
-//                            na_cur->rts_r++;
-//                        if(p == h80211+10)
-//                            na_cur->rts_t++;
-//                        break;
-//
-//                    case 0xC0:
-//                        na_cur->cts++;
-//                        break;
-//
-//                    case 0xD0:
-//                        na_cur->ack++;
-//                        break;
-//
-//                    default:
-//                        na_cur->other++;
-//                        break;
-//                }
-
                 /*grab next mac (for rts frames)*/
                 p+=6;
             }
@@ -1921,16 +1843,15 @@ void imlink_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int cards
             + ( tv2.tv_usec - tv3.tv_usec );
 
         //scan timeout
-        if( cycle_time > 3000000)
+        if( cycle_time > 2000000)
         {
             break;
         }
 
-        for(chan = 0; chan < chan_count; chan++)
+        for(chan = 1; chan < 14; chan++)
         {
-            G.channel[0] = G.channels[chan];
             //only one card
-            wi_set_channel(wi[0], G.channel[0]);
+            wi_set_channel(wi[0], chan);
             G.singlechan = 1;
 
             //usleep(100);
@@ -1946,12 +1867,12 @@ void imlink_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int cards
                     + ( tv0.tv_usec - tv1.tv_usec );
 
                 //scan timeout
-                if( cycle_time > 100000 )
+                if( cycle_time > 300000 )
                 {
                     update_rx_quality();
                     check_monitor(wi, fd_raw, fdh, cards);
                     check_channel(wi, cards);
-                    check_frequency(wi, cards);
+                    //check_frequency(wi, cards);
                     gettimeofday( &tv1, NULL );
                     break;
                 }
@@ -2022,6 +1943,7 @@ void imlink_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int cards
                 }
             }
         }
+        break;
     }
 
     iwscan_print_aplist();
