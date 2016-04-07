@@ -1,11 +1,11 @@
 #!/bin/sh
 
 #start imlink
-ifconfig wlan0 up
-imlink-mon stop mon0
-imlink-mon start wlan0
-ifconfig wlan0 down
-ifconfig wlan0-1 down
+ifconfig wlan0 up 2> /dev/null 1> /dev/null
+imlink-mon stop mon0  2> /dev/null 1> /dev/null
+imlink-mon start wlan0  2> /dev/null 1> /dev/null
+ifconfig wlan0 down  2> /dev/null 1> /dev/null
+ifconfig wlan0-1 down  2> /dev/null 1> /dev/null
 
 #. /home/intorobot/intorobot_log_tool/intorobot_log_tool.sh
 #print_inf "[$0 info]:cmd=$0 $*"
@@ -36,11 +36,6 @@ while :;do
   echo $auth
   password=`echo ${ap_info} | awk '{print $5}'`
   password=${password#*:}
-  if [ ! $password ]
-  then
-    auth='none' 
-    password='NULL'
-  fi
   echo $password
   channel=`echo ${ap_info} | awk '{print $6}'`
   channel=${channel#*:}
@@ -63,8 +58,8 @@ while :;do
   uci commit wireless
   uci set firewall.@zone[1].network='wan wan6'
   uci commit firewall
-  /etc/init.d/firewall restart
-  /etc/init.d/network restart
+  /etc/init.d/firewall restart  2> /dev/null 1> /dev/null
+  /etc/init.d/network restart  2> /dev/null 1> /dev/null
 
   rgb_control blink 255 0 0 400
   count=1;
@@ -88,12 +83,21 @@ while :;do
   if [ $success -eq 1 ];then
     break;
   fi
+
+  imlink-mon stop mon0  2> /dev/null 1> /dev/null
+  imlink-mon start wlan0  2> /dev/null 1> /dev/null
+  ifconfig wlan0 down  2> /dev/null 1> /dev/null
+  ifconfig wlan0-1 down  2> /dev/null 1> /dev/null
 done
 
 rgb_control blink 255 0 0 100
 echo "send data to port 18266"
 while :;do 
-   imlink-response -s ${ssid} -w ${password} -b ${bssid} -p 18266 -i ${source_ip}  
+   if [ ! $password ]; then
+     imlink-response -s ${ssid} -w ${password} -b ${bssid} -p 18266 -i ${source_ip}  
+   else
+     imlink-response -s ${ssid} -b ${bssid} -p 18266 -i ${source_ip}  
+   fi
    usleep 500000
 done
 
