@@ -76,12 +76,12 @@ int main(int argc, char** argv) {
 
     char version[] = "0.1";
 
-    if(argc != 11) {
+/*    if(argc != 11) {
         printf("Please provide all the arguments");
         printf(usage, version );
         return 0; //not enough arguments
     }
-
+*/
     do {
         option = getopt_long( argc, argv, "s:w:b:p:i:", long_options, NULL);
 
