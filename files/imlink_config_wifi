@@ -20,7 +20,6 @@ while :;do
   success=0
   rgb_control blink 255 0 0 1000
   ap_info=`imlink-dump |grep ImlinkResult`
-  #echo "$ap_info"
   ap_info=`echo ${ap_info#*:}`
   echo $ap_info
   source_ip=`echo ${ap_info#*:} | awk '{print $1}'`
@@ -91,12 +90,11 @@ while :;do
 done
 
 rgb_control blink 255 0 0 100
-echo "send data to port 18266"
 while :;do 
    if [ ! $password ]; then
-     imlink-response -s ${ssid} -w ${password} -b ${bssid} -p 18266 -i ${source_ip}  
-   else
      imlink-response -s ${ssid} -b ${bssid} -p 18266 -i ${source_ip}  
+   else
+     imlink-response -s ${ssid} -w ${password} -b ${bssid} -p 18266 -i ${source_ip}  
    fi
    usleep 500000
 done
