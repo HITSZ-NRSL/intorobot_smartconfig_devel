@@ -59,6 +59,7 @@ while :;do
   uci commit firewall
   /etc/init.d/firewall restart  2> /dev/null 1> /dev/null
   /etc/init.d/network restart  2> /dev/null 1> /dev/null
+  /etc/init.d/dnsmasq restart  2> /dev/null 1> /dev/null
 
   rgb_control blink 255 0 0 400
   count=1;
