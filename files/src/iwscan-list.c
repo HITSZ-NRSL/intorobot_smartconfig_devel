@@ -1325,84 +1325,6 @@ int dump_add_packet( unsigned char *h80211, int caplen, struct rx_info *ri, int 
                     }
                 }
 
-//                /* not found in either AP list or ST list, look through NA list */
-//                na_cur = G.na_1st;
-//                na_prv = NULL;
-//
-//                while( na_cur != NULL )
-//                {
-//                    if( ! memcmp( na_cur->namac, namac, 6 ) )
-//                        break;
-//
-//                    na_prv = na_cur;
-//                    na_cur = na_cur->next;
-//                }
-//
-//                /* update our chained list of unknown stations */
-//                /* if it's a new mac, add it */
-//
-//                if( na_cur == NULL )
-//                {
-//                    if( ! ( na_cur = (struct NA_info *) malloc(
-//                                    sizeof( struct NA_info ) ) ) )
-//                    {
-//                        perror( "malloc failed" );
-//                        return( 1 );
-//                    }
-//
-//                    memset( na_cur, 0, sizeof( struct NA_info ) );
-//
-//                    if( G.na_1st == NULL )
-//                        G.na_1st = na_cur;
-//                    else
-//                        na_prv->next  = na_cur;
-//
-//                    memcpy( na_cur->namac, namac, 6 );
-//
-//                    na_cur->prev = na_prv;
-//
-//                    gettimeofday(&(na_cur->tv), NULL);
-//                    na_cur->tinit = time( NULL );
-//                    na_cur->tlast = time( NULL );
-//
-//                    na_cur->power   = -1;
-//                    na_cur->channel = -1;
-//                    na_cur->ack     = 0;
-//                    na_cur->ack_old = 0;
-//                    na_cur->ackps   = 0;
-//                    na_cur->cts     = 0;
-//                    na_cur->rts_r   = 0;
-//                    na_cur->rts_t   = 0;
-//                }
-//
-//                /* update the last time seen & power*/
-//
-//                na_cur->tlast = time( NULL );
-//                na_cur->power = ri->ri_power;
-//                na_cur->channel = ri->ri_channel;
-//
-//                switch(h80211[0] & 0xF0)
-//                {
-//                    case 0xB0:
-//                        if(p == h80211+4)
-//                            na_cur->rts_r++;
-//                        if(p == h80211+10)
-//                            na_cur->rts_t++;
-//                        break;
-//
-//                    case 0xC0:
-//                        na_cur->cts++;
-//                        break;
-//
-//                    case 0xD0:
-//                        na_cur->ack++;
-//                        break;
-//
-//                    default:
-//                        na_cur->other++;
-//                        break;
-//                }
-
                 /*grab next mac (for rts frames)*/
                 p+=6;
             }
@@ -1626,10 +1548,79 @@ int check_frequency(struct wif *wi[], int cards)
     }
     return 0;
 }
+
+//clean aps with same names
+void clean_aps()
+{
+    int i;
+    char essid[50];  //can be a bug here
+    char essid_array[50]; //max ap number 
+    char power_array[50]; //max ap number 
+    int  essid_index=0;
+    char enc[10];
+    char auth[10];
+    char securitystr[23];
+
+    int Rssi_Quality;
+    struct AP_info *ap_cur;
+    int idx;
+
+    ap_cur = G.ap_end;
+
+    while( ap_cur != NULL )
+    {
+        /* skip APs with only one packet, or those older than 2 min.
+         * always skip if bssid == broadcast */
+        if( ap_cur->nb_pkt < 2 || time( NULL ) - ap_cur->tlast > G.berlin ||
+            memcmp( ap_cur->bssid, BROADCAST, 6 ) == 0 )
+        {
+            ap_cur = ap_cur->prev;
+            continue;
+        }
+        if(ap_cur->security != 0 && G.f_encrypt != 0 && ((ap_cur->security & G.f_encrypt) == 0))
+        {
+            ap_cur = ap_cur->prev;
+            continue;
+        }
+        if(ap_cur->ssid_length <= 0 || ap_cur->essid == NULL)
+        {
+            ap_cur = ap_cur->prev;
+            continue;
+        }
+
+        /*SSID*/
+        if(ap_cur->ssid_length > 30)
+        {
+            sprintf(essid, "0x");
+            for (idx = 0; (idx < 30) && (idx < ap_cur->ssid_length); idx++)
+                sprintf(essid + 2 + (idx*2), "%02X", ap_cur->essid[idx]);
+        }
+        else
+            strcpy(essid, ap_cur->essid);
+
+        if(essid_index >= 50)
+            break;
+
+        for(i=0; i<essid_index; i++)
+        {
+            if(strcmp(essid, essid_array[i])) 
+	    {
+               if (ap_cur->avg_power >= power_array[i] )
+                {
+                    power_array[i] = ap_cur->avg_power;
+                } 
+            }	
+        }
+
+        ap_cur = ap_cur->prev;
+    }
+}
 //get essid corresponding to bssid
 void iwscan_print_aplist()
 {
     char essid[50];  //can be a bug here
+    char essid_array[50]; //max ap number 
+    int  essid_index=0;
     char enc[10];
     char auth[10];
     char securitystr[23];
@@ -1643,7 +1634,7 @@ void iwscan_print_aplist()
     msg = (char *) malloc(sizeof(char) * totallen);
     memset(msg, 0 , totallen);
     sprintf(msg,"%s","\n");
-    sprintf(msg+strlen(msg),"%-4s%-33s%-23s%-23s%-9s%\n",
+    sprintf(msg+strlen(msg),"%-4s%-33s%-23s%-23s%-9s\n",
             "Ch", "SSID", "BSSID", "Security", "Siganl(%)");
 
     ap_cur = G.ap_end;
@@ -1701,8 +1692,6 @@ void iwscan_print_aplist()
             continue;
         }
 
-        /*Channel*/
-        sprintf(msg+strlen(msg),"%-4d,", ap_cur->channel);
         /*SSID*/
         if(ap_cur->ssid_length > 30)
         {
@@ -1712,16 +1701,6 @@ void iwscan_print_aplist()
         }
         else
             strcpy(essid, ap_cur->essid);
-        sprintf(msg+strlen(msg),"%-33s,", essid);
-
-        /*BSSID*/
-        sprintf(msg+strlen(msg),"%02x:%02x:%02x:%02x:%02x:%02x,   ",
-                ap_cur->bssid[0],
-                ap_cur->bssid[1],
-                ap_cur->bssid[2],
-                ap_cur->bssid[3],
-                ap_cur->bssid[4],
-                ap_cur->bssid[5]);
 
         /*Security*/
         if(!strcmp(enc, "NONE"))
@@ -1730,7 +1709,6 @@ void iwscan_print_aplist()
             sprintf(securitystr, "WEP");
         else
             sprintf(securitystr, "%s/%s", auth, enc);
-        sprintf(msg+strlen(msg), "%-23s, ", securitystr);
 
         /* Rssi*/
         if (ap_cur->avg_power >= -50)
@@ -1741,8 +1719,18 @@ void iwscan_print_aplist()
             Rssi_Quality = (int)(((ap_cur->avg_power + 90) * 26)/10);
         else    /* < -84 dbm*/
             Rssi_Quality = 0;
-        sprintf(msg+strlen(msg),"%-9d", Rssi_Quality);
 
+        sprintf(msg+strlen(msg),"%-4d,", ap_cur->channel);
+        sprintf(msg+strlen(msg),"%-33s,", essid);
+        sprintf(msg+strlen(msg),"%02x:%02x:%02x:%02x:%02x:%02x,   ",
+                ap_cur->bssid[0],
+                ap_cur->bssid[1],
+                ap_cur->bssid[2],
+                ap_cur->bssid[3],
+                ap_cur->bssid[4],
+                ap_cur->bssid[5]);
+        sprintf(msg+strlen(msg), "%-23s, ", securitystr);
+        sprintf(msg+strlen(msg),"%-9d", Rssi_Quality);
         sprintf(msg+strlen(msg),"\n");
 
         ap_cur = ap_cur->prev;
@@ -1855,16 +1843,15 @@ void imlink_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int cards
             + ( tv2.tv_usec - tv3.tv_usec );
 
         //scan timeout
-        if( cycle_time > 200000)
+        if( cycle_time > 2000000)
         {
             break;
         }
 
-        for(chan = 0; chan < chan_count; chan++)
+        for(chan = 1; chan < 14; chan++)
         {
-            G.channel[0] = G.channels[chan];
             //only one card
-            wi_set_channel(wi[0], G.channel[0]);
+            wi_set_channel(wi[0], chan);
             G.singlechan = 1;
 
             //usleep(100);
@@ -1880,12 +1867,12 @@ void imlink_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int cards
                     + ( tv0.tv_usec - tv1.tv_usec );
 
                 //scan timeout
-                if( cycle_time > 100000 )
+                if( cycle_time > 300000 )
                 {
                     update_rx_quality();
                     check_monitor(wi, fd_raw, fdh, cards);
                     check_channel(wi, cards);
-                    check_frequency(wi, cards);
+                    //check_frequency(wi, cards);
                     gettimeofday( &tv1, NULL );
                     break;
                 }
@@ -1956,6 +1943,7 @@ void imlink_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int cards
                 }
             }
         }
+        break;
     }
 
     iwscan_print_aplist();
