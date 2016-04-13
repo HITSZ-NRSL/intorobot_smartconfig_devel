@@ -72,6 +72,7 @@
 #include "imlink-dump.h"
 #include "osdep/common.h"
 #include "common.h"
+#include "uci.h"
 
 #ifdef USE_GCRYPT
 GCRY_THREAD_OPTION_PTHREAD_IMPL;
@@ -516,7 +517,7 @@ int dump_add_packet( unsigned char *h80211, int caplen, struct rx_info *ri, int 
         case  0: memcpy( bssid, h80211 + 16, 6 ); break;  //Adhoc
         case  1: memcpy( bssid, h80211 +  4, 6 ); break;  //ToDS
         case  2: memcpy( bssid, h80211 + 10, 6 ); break;  //FromDS
-        case  3: memcpy( bssid, h80211 + 10, 6 ); return;  //WDS -> Transmitter taken as BSSID
+        case  3: memcpy( bssid, h80211 + 10, 6 ); return 0;  //WDS -> Transmitter taken as BSSID
     }
     
    
@@ -2209,7 +2210,7 @@ void imlink_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int cards
                                     if(strcmp(ApEnc, "NONE") == 0)
                                         strcpy(ApAuth, "none");
 
-                                    printf("ImlinkResult:");
+                                    printf("IntoRobot-ImlinkResult:");
                                     printf("SourceIP:%u.%u.%u.%u ", srcIP[0], srcIP[1], srcIP[2], srcIP[3]);
                                     printf("ESsid:%s ApEnc:%s ApAuth:%s ApPasswd:%s Channel:%d ", ApESsid, ApEnc, ApAuth, ApPasswd, ApChannel);
                                     printf("BSsid:%02X:%02X:%02X:%02X:%02X:%02X\n", ApBSsid[0], ApBSsid[1],ApBSsid[2],ApBSsid[3],ApBSsid[4],ApBSsid[5]);
@@ -2297,6 +2298,23 @@ void imlink_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int cards
 
     free(imlink_packet_num);
 }
+int checkBoard(char * board_name)
+{
+    struct uci_context *c;
+    struct uci_ptr p;
+    char str[15];
+    sprintf(str, "%s.stm32", board_name);
+ 
+    c = uci_alloc_context();
+    if(UCI_OK != uci_lookup_ptr(c, &p, str, true))
+    {
+        printf("The imlink is only supported in IntoRobot Products. Please contact sales@molmc.com for details\n");
+        return -1;
+    }
+ 
+    return 1;
+}
+
 int main( int argc, char *argv[] )
 {
     long time_slept;
@@ -2312,6 +2330,10 @@ int main( int argc, char *argv[] )
     unsigned char      buffer[4096];
     unsigned char      *h80211;
     char               *iface[MAX_CARDS];
+
+    //Board Checking
+    if(!checkBoard("atom"))
+       exit(0);
     /* initialize a bunch of variables */
 
     memset( &G, 0, sizeof( G ) );

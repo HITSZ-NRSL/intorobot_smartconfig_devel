@@ -23,7 +23,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/molmc-imlink
   SECTION:=net
   CATEGORY:=Intorobot
-  DEPENDS:=+libpcap +libpthread +libopenssl +libnl +wireless-tools +ethtool
+  DEPENDS:=+libpcap +libpthread +libopenssl +libnl +libuci +wireless-tools +ethtool
   TITLE:=Smartconfig tools for quick wifi-connection
   URL:=http://www.intorobot.com/
   MAINTAINER:=CH <support@molmc.com>
