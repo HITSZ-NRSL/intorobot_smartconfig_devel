@@ -1,13 +1,9 @@
-## intorobot_smartconfig_devel
+## intorobot_imlink_devel
 NONE
 
-## Test Smartconfig in IntoRobot-Atom
-- log in you atom, and run the script smartconfig_get_ap_info. this script is used for decoding the smartconfig encoded messages as well as configing the wifi with the decoded info
+## Test Imlink in IntoRobot-Atom
+- log in you atom, and run the scripts sc_config_kill and imlink_config_wifi. The scripts are used for decoding the imlink encoded messages as well as configing the wifi with the decoded info
 ```
-  atom# smartconfig_get_ap_info
+  atom# sc_config_kill & imlink_config_wifi
 ```
-- at the same time, run the test python for atom-yun configuration
-```
-  atom# python sockets_udp2.py
-```
-- and then, run intorobot-App and add a new device. (Your smart phone should be connected to a ap which is already connected to the Internet
+- at the same time, use your IntoRobot Apps (>2.1.0) to start imlink  (Your smart phone should be connected to a ap which is already connected to the Internet

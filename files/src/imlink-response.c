@@ -18,12 +18,24 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <stdio.h>
+#include <sys/param.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <net/if_arp.h>
+#undef SOLARIS
+#ifdef SOLARIS
+#include <sys/sockio.h>
+#endif
+
+#define MAXINTERFACES 16 /* 最大接口数 */
 
 char usage[] =
 "\n"
@@ -52,6 +64,42 @@ struct option long_options[] = {
         {"help",     0, 0, 'h'},
     };
 
+char broadcast_addr[16];
+//get the broadcast ip address
+void getNetInfo()
+{
+  register int fd, intrface, retn = 0;
+  struct ifreq buf[MAXINTERFACES]; /* ifreq结构数组 */
+  struct arpreq arp;
+  struct ifconf ifc;
+  if ((fd = socket (AF_INET, SOCK_DGRAM, 0)) >= 0)
+  {
+    ifc.ifc_len = sizeof buf;
+    ifc.ifc_buf = (caddr_t) buf;
+    if (!ioctl (fd, SIOCGIFCONF, (char *) &ifc))
+    {
+      //获取接口数量信息
+      intrface = ifc.ifc_len / sizeof (struct ifreq);
+      //根据借口信息循环获取设备IP和MAC地址
+      while ( (intrface--) > 0)
+      {
+        //获取设备名称
+        if(strcmp(buf[intrface].ifr_name,"wlan0") !=0)
+            continue;
+       //广播地址
+       if (! (ioctl(fd, SIOCGIFBRDADDR, (char *) &buf[intrface])))
+       sprintf(broadcast_addr, "%s",
+          (char*)inet_ntoa(((struct sockaddr_in*) (&buf[intrface].ifr_addr))->sin_addr));
+      } //while
+    }
+    else
+      perror ("cpm: ioctl");
+  }
+  else
+    perror ("cpm: socket");
+  close (fd);
+}
+
 //the response packet format is: -s ApSsid, -p ApPasswd, -b bssid(mac)地址，-i ip地址．
 //the argument is: (ApSsid+ApPasswd).length+9, mac地址，ip地址，数据总长度．
 int main(int argc, char** argv) {
@@ -73,8 +121,8 @@ int main(int argc, char** argv) {
     unsigned char buf[80];
 
     struct sockaddr_in my_addr,user_addr;
-
-    char version[] = "0.1";
+    getNetInfo();
+    char version[] = "0.2";
 
 /*    if(argc != 11) {
         printf("Please provide all the arguments");
@@ -119,7 +167,8 @@ int main(int argc, char** argv) {
                 break;
 
             case 'i':
-                str_ip = (char*)malloc(strlen(optarg) + 1);
+                //str_ip = (char*)malloc(strlen(optarg) + 1);
+                str_ip = (char*)malloc(16);
                 strcpy(str_ip, optarg);
                 sscanf(str_ip, "%d.%d.%d.%d", &ip[0], &ip[1], &ip[2], &ip[3]);
                 break;
@@ -135,7 +184,8 @@ int main(int argc, char** argv) {
     my_addr.sin_family=AF_INET;
     my_addr.sin_port=htons(port);
     //change ip to broadcast ip
-    sprintf(str_ip, "%d.%d.%d.255", ip[0], ip[1], ip[2]);
+    //sprintf(str_ip, "%d.%d.%d.255", ip[0], ip[1], ip[2]);
+    sprintf(str_ip, "%s", broadcast_addr);
     printf("the broadcast ip is:%s", str_ip);
     my_addr.sin_addr.s_addr=inet_addr(str_ip);
     bzero(&(my_addr.sin_zero),8);

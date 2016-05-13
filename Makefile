@@ -23,7 +23,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/molmc-imlink
   SECTION:=net
   CATEGORY:=Intorobot
-  DEPENDS:=+libpcap +libpthread +libopenssl +libnl +wireless-tools +ethtool
+  DEPENDS:=+libpcap +libpthread +libopenssl +libnl +libuci +wireless-tools +ethtool
   TITLE:=Smartconfig tools for quick wifi-connection
   URL:=http://www.intorobot.com/
   MAINTAINER:=CH <support@molmc.com>
@@ -52,7 +52,6 @@ define Package/molmc-imlink/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/imlink-dump $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/imlink-response $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/iwscan-list $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/imlink_config_wifi $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/sc_config_kill $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/sbin
