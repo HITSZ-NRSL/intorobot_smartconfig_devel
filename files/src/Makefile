@@ -81,7 +81,7 @@ OBJS_TT		= tkiptun-ng.o common.o crypto.o osdep/radiotap/radiotap.o
 OBJS_WC		= wpaclean.o osdep/radiotap/radiotap.o
 
 OSD		= osdep
-LIBS		:= -L$(OSD) -l$(OSD) $(LIBS)
+LIBS		:= -L$(OSD) -l$(OSD) -luci $(LIBS)
 ifeq ($(OSNAME), cygwin)
 LIBS		+= -liphlpapi -lsetupapi -luuid
 endif
