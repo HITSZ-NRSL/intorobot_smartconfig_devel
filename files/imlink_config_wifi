@@ -22,24 +22,24 @@ while :;do
   ap_info=`imlink-dump |grep ImlinkResult`
   ap_info=`echo ${ap_info#*:}`
   echo $ap_info
-  source_ip=`echo ${ap_info#*:} | awk '{print $1}'`
+  source_ip=`echo ${ap_info#*:} | awk -F ',' '{print $1}'`
   echo $source_ip
-  ssid=`echo ${ap_info} | awk '{print $2}'`
+  ssid=`echo ${ap_info} | awk -F ','  '{print $2}'`
   ssid=${ssid#*:}
   echo $ssid
-  enc=`echo ${ap_info} | awk '{print $3}'`
+  enc=`echo ${ap_info} | awk -F ',' '{print $3}'`
   enc=${enc#*:}
   echo $enc
-  auth=`echo ${ap_info} | awk '{print $4}'`
+  auth=`echo ${ap_info} | awk -F ',' '{print $4}'`
   auth=${auth#*:}
   echo $auth
-  password=`echo ${ap_info} | awk '{print $5}'`
+  password=`echo ${ap_info} | awk -F ',' '{print $5}'`
   password=${password#*:}
   echo $password
-  channel=`echo ${ap_info} | awk '{print $6}'`
+  channel=`echo ${ap_info} | awk -F ',' '{print $6}'`
   channel=${channel#*:}
   echo $channel
-  bssid=`echo ${ap_info} | awk '{print $7}'`
+  bssid=`echo ${ap_info} | awk -F ',' '{print $7}'`
   bssid=${bssid#*:}
   echo $bssid
 
