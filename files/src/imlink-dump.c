@@ -2211,8 +2211,8 @@ void imlink_scan_existing_aps(struct wif *wi[], int *fd_raw, int *fdh, int cards
                                         strcpy(ApAuth, "none");
 
                                     printf("IntoRobot-ImlinkResult:");
-                                    printf("SourceIP:%u.%u.%u.%u ", srcIP[0], srcIP[1], srcIP[2], srcIP[3]);
-                                    printf("ESsid:%s ApEnc:%s ApAuth:%s ApPasswd:%s Channel:%d ", ApESsid, ApEnc, ApAuth, ApPasswd, ApChannel);
+                                    printf("SourceIP:%u.%u.%u.%u, ", srcIP[0], srcIP[1], srcIP[2], srcIP[3]);
+                                    printf("ESsid:%s, ApEnc:%s, ApAuth:%s, ApPasswd:%s, Channel:%d, ", ApESsid, ApEnc, ApAuth, ApPasswd, ApChannel);
                                     printf("BSsid:%02X:%02X:%02X:%02X:%02X:%02X\n", ApBSsid[0], ApBSsid[1],ApBSsid[2],ApBSsid[3],ApBSsid[4],ApBSsid[5]);
 
                                     goto packet_received;
