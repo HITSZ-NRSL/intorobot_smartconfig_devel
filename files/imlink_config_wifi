@@ -51,8 +51,8 @@ while :;do
   uci set wireless.atom_sta.device='radio0'
   uci set wireless.atom_sta.network='wwan'
   uci set wireless.atom_sta.mode='sta'
-  uci set wireless.atom_sta.ssid=${ssid}
-  uci set wireless.atom_sta.key=${password}
+  uci set wireless.atom_sta.ssid="${ssid}"
+  uci set wireless.atom_sta.key="${password}"
   uci set wireless.atom_sta.encryption=${auth}
   uci commit wireless
   uci set firewall.@zone[1].network='wan wan6'
